@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import math
-from typing import Optional
 
 import torch
-from torch import Tensor, nn
+from torch import nn
 
 
 class AdaptiveCrossDomainMixStyle(nn.Module):
-    """
-    Adaptive Cross-Domain MixStyle.
+    """Adaptive Cross-Domain MixStyle.
 
     Main ideas:
     1. Only mix samples from different domains.
@@ -33,67 +31,41 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
         super().__init__()
 
         if not 0.0 <= p <= 1.0:
-            raise ValueError(
-                f"p must be in [0, 1], got {p}"
-            )
+            raise ValueError(f"p must be in [0, 1], got {p}")
 
         if alpha <= 0.0:
-            raise ValueError(
-                f"alpha must be > 0, got {alpha}"
-            )
+            raise ValueError(f"alpha must be > 0, got {alpha}")
 
         if not 0.0 <= target_quantile <= 1.0:
-            raise ValueError(
-                "target_quantile must be in [0, 1], "
-                f"got {target_quantile}"
-            )
+            raise ValueError(f"target_quantile must be in [0, 1], got {target_quantile}")
 
         if partner_temperature <= 0.0:
-            raise ValueError(
-                "partner_temperature must be > 0, "
-                f"got {partner_temperature}"
-            )
+            raise ValueError(f"partner_temperature must be > 0, got {partner_temperature}")
 
         if not 0.0 <= adaptation_strength <= 1.0:
-            raise ValueError(
-                "adaptation_strength must be in [0, 1], "
-                f"got {adaptation_strength}"
-            )
+            raise ValueError(f"adaptation_strength must be in [0, 1], got {adaptation_strength}")
 
         if distance_gamma <= 0.0:
-            raise ValueError(
-                "distance_gamma must be > 0, "
-                f"got {distance_gamma}"
-            )
+            raise ValueError(f"distance_gamma must be > 0, got {distance_gamma}")
 
         self.p = float(p)
         self.alpha = float(alpha)
 
-        self.target_quantile = float(
-            target_quantile
-        )
+        self.target_quantile = float(target_quantile)
 
-        self.partner_temperature = float(
-            partner_temperature
-        )
+        self.partner_temperature = float(partner_temperature)
 
-        self.adaptation_strength = float(
-            adaptation_strength
-        )
+        self.adaptation_strength = float(adaptation_strength)
 
-        self.distance_gamma = float(
-            distance_gamma
-        )
+        self.distance_gamma = float(distance_gamma)
 
-        self.use_adaptive_lambda = bool(
-            use_adaptive_lambda
-        )
+        self.use_adaptive_lambda = bool(use_adaptive_lambda)
 
         self.eps = float(eps)
         self.debug = bool(debug)
 
         self.last_debug = {}
-    
+
     def extra_repr(self):
         return (
             f"p={self.p}, "
@@ -111,13 +83,9 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
         device,
     ):
         if not torch.is_tensor(domain_ids):
-            domain_ids = torch.as_tensor(
-                domain_ids
-            )
+            domain_ids = torch.as_tensor(domain_ids)
 
-        domain_ids = domain_ids.to(
-            device=device
-        ).reshape(-1)
+        domain_ids = domain_ids.to(device=device).reshape(-1)
 
         if domain_ids.numel() != batch_size:
             raise ValueError(
@@ -141,13 +109,9 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
             keepdim=True,
         ).detach()
 
-        sigma = (
-            var + self.eps
-        ).sqrt()
+        sigma = (var + self.eps).sqrt()
 
-        x_norm = (
-            x - mu
-        ) / sigma
+        x_norm = (x - mu) / sigma
 
         return (
             mu,
@@ -162,12 +126,8 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
     ):
         style = torch.cat(
             [
-                mu.flatten(
-                    start_dim=1
-                ),
-                sigma.flatten(
-                    start_dim=1
-                ),
+                mu.flatten(start_dim=1),
+                sigma.flatten(start_dim=1),
             ],
             dim=1,
         ).float()
@@ -181,13 +141,9 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
             dim=0,
             unbiased=False,
             keepdim=True,
-        ).clamp_min(
-            self.eps
-        )
+        ).clamp_min(self.eps)
 
-        style = (
-            style - center
-        ) / scale
+        style = (style - center) / scale
 
         return style
 
@@ -196,8 +152,7 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
         style,
         domain_ids,
     ):
-        batch_size = style.shape[0]
-        device = style.device
+        style.shape[0]
 
         distances = torch.cdist(
             style,
@@ -205,9 +160,8 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
             p=2,
         )
 
-        distances = distances / math.sqrt(
-            max(style.shape[1], 1)
-        )    
+        distances = distances / math.sqrt(max(style.shape[1], 1))
+
     def _select_cross_domain_partners(
         self,
         style,
@@ -222,22 +176,13 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
             p=2,
         )
 
-        distances = distances / math.sqrt(
-            max(style.shape[1], 1)
-        )
+        distances = distances / math.sqrt(max(style.shape[1], 1))
 
-        cross_domain = (
-            domain_ids[:, None]
-            !=
-            domain_ids[None, :]
-        )
+        cross_domain = domain_ids[:, None] != domain_ids[None, :]
 
-        valid_distances = distances[
-            cross_domain
-        ]
+        valid_distances = distances[cross_domain]
 
         if valid_distances.numel() == 0:
-
             idx = torch.arange(
                 batch_size,
                 device=device,
@@ -254,19 +199,11 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
                 zeros,
             )
 
-        global_min = (
-            valid_distances.min()
-        )
+        global_min = valid_distances.min()
 
-        global_max = (
-            valid_distances.max()
-        )
+        global_max = valid_distances.max()
 
-        global_range = (
-            global_max - global_min
-        ).clamp_min(
-            self.eps
-        )
+        global_range = (global_max - global_min).clamp_min(self.eps)
 
         partner_idx = torch.empty(
             batch_size,
@@ -281,7 +218,6 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
         )
 
         for i in range(batch_size):
-
             candidates = torch.nonzero(
                 cross_domain[i],
                 as_tuple=False,
@@ -293,86 +229,43 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
             ]
 
             if candidates.numel() == 1:
-
                 chosen_local = torch.tensor(
                     0,
                     device=device,
                 )
 
             else:
-
                 target = torch.quantile(
                     candidate_dist,
                     self.target_quantile,
                 )
 
-                local_scale = (
-                    candidate_dist.std(
-                        unbiased=False
-                    )
-                    .clamp_min(
-                        self.eps
-                    )
-                )
+                local_scale = candidate_dist.std(unbiased=False).clamp_min(self.eps)
 
-                score = -torch.abs(
-                    candidate_dist
-                    - target
-                )
+                score = -torch.abs(candidate_dist - target)
 
-                score = score / (
-                    self.partner_temperature
-                    * local_scale
-                    + self.eps
-                )
+                score = score / (self.partner_temperature * local_scale + self.eps)
 
                 probability = torch.softmax(
                     score,
                     dim=0,
                 )
 
-                if (
-                    not torch.isfinite(
-                        probability
-                    ).all()
-                    or
-                    probability.sum() <= 0
-                ):
+                if not torch.isfinite(probability).all() or probability.sum() <= 0:
+                    probability = torch.ones_like(probability) / probability.numel()
 
-                    probability = (
-                        torch.ones_like(
-                            probability
-                        )
-                        /
-                        probability.numel()
-                    )
-
-                chosen_local = (
-                    torch.multinomial(
-                        probability,
-                        num_samples=1,
-                        replacement=True,
-                    )
-                    .squeeze(0)
-                )
-            chosen = candidates[
-                chosen_local
-            ]
+                chosen_local = torch.multinomial(
+                    probability,
+                    num_samples=1,
+                    replacement=True,
+                ).squeeze(0)
+            chosen = candidates[chosen_local]
 
             partner_idx[i] = chosen
 
-            selected_distance[i] = (
-                distances[i, chosen]
-            )
+            selected_distance[i] = distances[i, chosen]
 
-        normalized_distance = (
-            (
-                selected_distance
-                - global_min
-            )
-            /
-            global_range
-        ).clamp(
+        normalized_distance = ((selected_distance - global_min) / global_range).clamp(
             0.0,
             1.0,
         )
@@ -399,9 +292,7 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
             concentration,
         )
 
-        base_lambda = beta.sample(
-            (batch_size,)
-        )
+        base_lambda = beta.sample((batch_size,))
 
         base_lambda = base_lambda.view(
             batch_size,
@@ -417,32 +308,16 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
         base_lambda,
         normalized_distance,
     ):
-        distance_weight = (
-            normalized_distance.pow(
-                self.distance_gamma
-            )
+        distance_weight = normalized_distance.pow(self.distance_gamma)
+
+        distance_weight = distance_weight.view(
+            -1,
+            1,
+            1,
+            1,
         )
 
-        distance_weight = (
-            distance_weight.view(
-                -1,
-                1,
-                1,
-                1,
-            )
-        )
-
-        adaptive_lambda = (
-            base_lambda
-            +
-            (
-                1.0 - base_lambda
-            )
-            *
-            self.adaptation_strength
-            *
-            distance_weight
-        )
+        adaptive_lambda = base_lambda + (1.0 - base_lambda) * self.adaptation_strength * distance_weight
 
         return adaptive_lambda.clamp(
             0.0,
@@ -454,19 +329,12 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
         x,
         domain_ids=None,
     ):
-        self.last_debug = {
-            "applied": False
-        }
+        self.last_debug = {"applied": False}
 
         if x.ndim != 4:
-            raise ValueError(
-                "AdaptiveCrossDomainMixStyle "
-                "expects BCHW features. "
-                f"Got shape {tuple(x.shape)}"
-            )
+            raise ValueError(f"AdaptiveCrossDomainMixStyle expects BCHW features. Got shape {tuple(x.shape)}")
 
         if not self.training:
-
             self.last_debug = {
                 "applied": False,
                 "reason": "eval_mode",
@@ -477,7 +345,6 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
         batch_size = x.shape[0]
 
         if batch_size < 2:
-
             self.last_debug = {
                 "applied": False,
                 "reason": "batch_too_small",
@@ -486,28 +353,15 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
             return x
 
         if domain_ids is None:
+            raise ValueError("domain_ids is required while AdaptiveCrossDomainMixStyle is in training mode.")
 
-            raise ValueError(
-                "domain_ids is required while "
-                "AdaptiveCrossDomainMixStyle "
-                "is in training mode."
-            )
-
-        domain_ids = (
-            self._prepare_domain_ids(
-                domain_ids,
-                batch_size,
-                x.device,
-            )
+        domain_ids = self._prepare_domain_ids(
+            domain_ids,
+            batch_size,
+            x.device,
         )
 
-        if (
-            torch.unique(
-                domain_ids
-            ).numel()
-            < 2
-        ):
-
+        if torch.unique(domain_ids).numel() < 2:
             self.last_debug = {
                 "applied": False,
                 "reason": "single_domain_batch",
@@ -522,7 +376,6 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
             )
             > self.p
         ):
-
             self.last_debug = {
                 "applied": False,
                 "reason": "probability_gate",
@@ -542,157 +395,63 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
         )
 
         with torch.no_grad():
-
             (
                 partner_idx,
                 selected_distance,
                 normalized_distance,
-            ) = (
-                self._select_cross_domain_partners(
-                    style,
-                    domain_ids,
-                )
+            ) = self._select_cross_domain_partners(
+                style,
+                domain_ids,
             )
 
-            base_lambda = (
-                self._sample_base_lambda(
-                    batch_size,
-                    x.device,
-                )
+            base_lambda = self._sample_base_lambda(
+                batch_size,
+                x.device,
             )
 
             if self.use_adaptive_lambda:
-            
-                adaptive_lambda = (
-                    self._adaptive_lambda(
-                        base_lambda,
-                        normalized_distance,
-                    )
+                adaptive_lambda = self._adaptive_lambda(
+                    base_lambda,
+                    normalized_distance,
                 )
-            
+
             else:
-            
                 # Adaptive Partner Only:
                 # keep the original MixStyle lambda.
-                adaptive_lambda = (
-                    base_lambda.clone()
-                )
+                adaptive_lambda = base_lambda.clone()
 
-        partner_domain_ids = (
-            domain_ids[
-                partner_idx
-            ]
-        )
+        partner_domain_ids = domain_ids[partner_idx]
 
-        if torch.any(
-            partner_domain_ids
-            ==
-            domain_ids
-        ):
-            raise RuntimeError(
-                "Adaptive Cross-Domain MixStyle "
-                "selected a same-domain partner."
-            )
+        if torch.any(partner_domain_ids == domain_ids):
+            raise RuntimeError("Adaptive Cross-Domain MixStyle selected a same-domain partner.")
 
-        adaptive_lambda = (
-            adaptive_lambda.to(
-                dtype=x.dtype
-            )
-        )
+        adaptive_lambda = adaptive_lambda.to(dtype=x.dtype)
 
-        mu_partner = mu[
-            partner_idx
-        ]
+        mu_partner = mu[partner_idx]
 
-        sigma_partner = sigma[
-            partner_idx
-        ]
+        sigma_partner = sigma[partner_idx]
 
-        mu_mix = (
-            adaptive_lambda
-            * mu
-            +
-            (
-                1.0
-                - adaptive_lambda
-            )
-            * mu_partner
-        )
+        mu_mix = adaptive_lambda * mu + (1.0 - adaptive_lambda) * mu_partner
 
-        sigma_mix = (
-            adaptive_lambda
-            * sigma
-            +
-            (
-                1.0
-                - adaptive_lambda
-            )
-            * sigma_partner
-        )
+        sigma_mix = adaptive_lambda * sigma + (1.0 - adaptive_lambda) * sigma_partner
 
-        out = (
-            x_norm
-            * sigma_mix
-            +
-            mu_mix
-        )
+        out = x_norm * sigma_mix + mu_mix
 
         self.last_debug = {
             "applied": True,
-
-            "use_adaptive_lambda":
-                self.use_adaptive_lambda,
-
-            "source_domains":
-                domain_ids
-                .detach()
-                .cpu()
-                .tolist(),
-
-            "partner_domains":
-                partner_domain_ids
-                .detach()
-                .cpu()
-                .tolist(),
-
-            "partner_indices":
-                partner_idx
-                .detach()
-                .cpu()
-                .tolist(),
-
-            "style_distance":
-                selected_distance
-                .detach()
-                .cpu()
-                .tolist(),
-
-            "normalized_distance":
-                normalized_distance
-                .detach()
-                .cpu()
-                .tolist(),
-
-            "base_lambda":
-                base_lambda
-                .flatten()
-                .detach()
-                .cpu()
-                .tolist(),
-
-            "adaptive_lambda":
-                adaptive_lambda
-                .flatten()
-                .detach()
-                .float()
-                .cpu()
-                .tolist(),
+            "use_adaptive_lambda": self.use_adaptive_lambda,
+            "source_domains": domain_ids.detach().cpu().tolist(),
+            "partner_domains": partner_domain_ids.detach().cpu().tolist(),
+            "partner_indices": partner_idx.detach().cpu().tolist(),
+            "style_distance": selected_distance.detach().cpu().tolist(),
+            "normalized_distance": normalized_distance.detach().cpu().tolist(),
+            "base_lambda": base_lambda.flatten().detach().cpu().tolist(),
+            "adaptive_lambda": adaptive_lambda.flatten().detach().float().cpu().tolist(),
         }
         if self.debug:
             self._print_debug()
 
         return out
-
 
     def _print_debug(
         self,
@@ -712,22 +471,15 @@ class AdaptiveCrossDomainMixStyle(nn.Module):
             return
 
         n = min(
-            len(
-                self.last_debug[
-                    "source_domains"
-                ]
-            ),
+            len(self.last_debug["source_domains"]),
             max_samples,
         )
 
-        print(
-            "\n[AD-CDMS] adaptive mixing"
-        )
+        print("\n[AD-CDMS] adaptive mixing")
 
         print("-" * 78)
 
         for i in range(n):
-
             print(
                 f"sample={i:02d} "
                 f"src="

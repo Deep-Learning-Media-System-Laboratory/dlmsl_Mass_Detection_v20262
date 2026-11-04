@@ -1,9 +1,6 @@
 from ultralytics import YOLO
 
-
-model = YOLO(
-    "ultralytics/cfg/models/v8/yolov8n-ms.yaml"
-)
+model = YOLO("ultralytics/cfg/models/v8/yolov8n-ms.yaml")
 
 model.load("yolov8n.pt")
 
