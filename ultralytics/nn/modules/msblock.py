@@ -34,17 +34,12 @@ class MSBlockLayer(nn.Module):
             raise ValueError(f"channels must be positive, received {channels}")
 
         if kernel_size <= 1 or kernel_size % 2 == 0:
-            raise ValueError(
-                "MSBlockLayer kernel_size must be an odd integer larger "
-                f"than 1, received {kernel_size}"
-            )
+            raise ValueError(f"MSBlockLayer kernel_size must be an odd integer larger than 1, received {kernel_size}")
 
         if expand_ratio < 1.0:
-            raise ValueError(
-                f"expand_ratio must be >= 1.0, received {expand_ratio}"
-            )
+            raise ValueError(f"expand_ratio must be >= 1.0, received {expand_ratio}")
 
-        expanded_channels = int(round(channels * expand_ratio))
+        expanded_channels = round(channels * expand_ratio)
 
         # The first convolution uses groups=channels. Therefore its output
         # channels must be divisible by channels.
@@ -79,16 +74,14 @@ class MSBlock(nn.Module):
     Args:
         c1: Number of input channels.
         c2: Number of output channels.
-        kernel_sizes: Kernel size for each feature branch. The official
-            YOLO-MS neck uses three branches such as (1, 3, 3),
-            (1, 5, 5), or (1, 7, 7).
-        down_ratio: Number of channels in each branch relative to c1.
-            With three branches and down_ratio=0.5, the internal projection
-            has 3 * 0.5 * c1 channels.
+        kernel_sizes: Kernel size for each feature branch. The official YOLO-MS neck uses three branches such as (1, 3,
+            3), (1, 5, 5), or (1, 7, 7).
+        down_ratio: Number of channels in each branch relative to c1. With three branches and down_ratio=0.5, the
+            internal projection has 3 * 0.5 * c1 channels.
         mid_expand_ratio: Expansion ratio inside each large-kernel branch.
         layers_num: Number of MSBlockLayer modules in each processed branch.
-        start_branch_id: First branch that receives the preceding branch's
-            output before its own processing. Branch indices are zero-based.
+        start_branch_id: First branch that receives the preceding branch's output before its own processing. Branch
+            indices are zero-based.
     """
 
     def __init__(
@@ -107,25 +100,16 @@ class MSBlock(nn.Module):
         number_of_branches = len(kernel_sizes)
 
         if c1 <= 0 or c2 <= 0:
-            raise ValueError(
-                f"c1 and c2 must be positive, received c1={c1}, c2={c2}"
-            )
+            raise ValueError(f"c1 and c2 must be positive, received c1={c1}, c2={c2}")
 
         if number_of_branches < 2:
-            raise ValueError(
-                "MSBlock requires at least two branches, received "
-                f"{number_of_branches}"
-            )
+            raise ValueError(f"MSBlock requires at least two branches, received {number_of_branches}")
 
         if down_ratio <= 0:
-            raise ValueError(
-                f"down_ratio must be positive, received {down_ratio}"
-            )
+            raise ValueError(f"down_ratio must be positive, received {down_ratio}")
 
         if layers_num < 1:
-            raise ValueError(
-                f"layers_num must be at least 1, received {layers_num}"
-            )
+            raise ValueError(f"layers_num must be at least 1, received {layers_num}")
 
         if not 0 <= start_branch_id < number_of_branches:
             raise ValueError(
@@ -198,9 +182,7 @@ class MSBlock(nn.Module):
 
         outputs: list[torch.Tensor] = []
 
-        for branch_id, (branch_input, branch) in enumerate(
-            zip(branch_inputs, self.branches)
-        ):
+        for branch_id, (branch_input, branch) in enumerate(zip(branch_inputs, self.branches)):
             # Cross-branch information flow from YOLO-MS.
             if branch_id >= self.start_branch_id:
                 branch_input = branch_input + outputs[branch_id - 1]

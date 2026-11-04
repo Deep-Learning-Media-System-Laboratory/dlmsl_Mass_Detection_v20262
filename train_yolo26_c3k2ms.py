@@ -2,7 +2,6 @@ from pathlib import Path
 
 from ultralytics import YOLO
 
-
 # MODEL_YAML = "ultralytics/cfg/models/26/yolo26n-c3k2ms.yaml"
 MODEL_YAML = "ultralytics/cfg/models/26/yolo26n-c3k2ms-deeplite.yaml"
 PRETRAINED_WEIGHTS = "yolo26n.pt"
@@ -15,14 +14,11 @@ RUN_NAME = "with-embed-cmmd-normal_yolo26n-deeplite-gate01"
 
 def main() -> None:
     """Build, initialize, and train YOLO26-C3k2MS."""
-
     # Check only files that must physically exist under this exact name.
     data_yaml = Path(DATA_YAML)
 
     if not data_yaml.exists():
-        raise FileNotFoundError(
-            f"Dataset YAML was not found:\n{data_yaml.resolve()}"
-        )
+        raise FileNotFoundError(f"Dataset YAML was not found:\n{data_yaml.resolve()}")
 
     # Do not call Path.exists() on the scale-specific model alias.
     # Ultralytics resolves yolo26n-c3k2ms.yaml to yolo26-c3k2ms.yaml.
