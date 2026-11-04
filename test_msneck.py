@@ -2,7 +2,6 @@ import torch
 
 from ultralytics.nn.tasks import DetectionModel
 
-
 CONFIG = "ultralytics/cfg/models/26/yolo26n-msneck.yaml"
 
 
@@ -21,9 +20,7 @@ def main() -> None:
         print(f"Layer {index}: {layer_name}")
 
         if layer_name != "MSBlock":
-            raise RuntimeError(
-                f"Expected MSBlock at layer {index}, found {layer_name}"
-            )
+            raise RuntimeError(f"Expected MSBlock at layer {index}, found {layer_name}")
 
     x = torch.zeros(1, 3, 640, 640)
 
