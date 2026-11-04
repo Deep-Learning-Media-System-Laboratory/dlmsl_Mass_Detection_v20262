@@ -1,6 +1,5 @@
 from ultralytics import YOLO
 
-
 CONFIG = "ultralytics/cfg/models/26/yolo26n-msneck.yaml"
 
 
