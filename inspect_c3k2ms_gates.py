@@ -1,9 +1,6 @@
 from ultralytics import YOLO
 
-
-WEIGHTS = (
-    "/home/yeozekiel/yolo/YOLO-MS/ultralytics/runs/detect/runs/detect/with-embed-cmmd-normal_yolo26n-deeplite-gate01-4/weights/best.pt"
-)
+WEIGHTS = "/home/yeozekiel/yolo/YOLO-MS/ultralytics/runs/detect/runs/detect/with-embed-cmmd-normal_yolo26n-deeplite-gate01-4/weights/best.pt"
 
 
 def main() -> None:
@@ -17,9 +14,7 @@ def main() -> None:
             gates.append((name, value))
 
     if not gates:
-        raise RuntimeError(
-            "No residual gate parameters found."
-        )
+        raise RuntimeError("No residual gate parameters found.")
 
     print("\nLearned C3k2MS residual gates:")
 
