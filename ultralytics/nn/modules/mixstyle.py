@@ -7,9 +7,7 @@ from .block import C3k2
 
 
 class MixStyle(nn.Module):
-    """
-    MixStyle
-    Zhou et al., ICLR 2021
+    """MixStyle Zhou et al., ICLR 2021.
 
     Training:
         randomly mixes feature statistics between samples.
@@ -63,9 +61,7 @@ class MixStyle(nn.Module):
             correction=0,
         )
 
-        sigma = torch.sqrt(
-            var + self.eps
-        )
+        sigma = torch.sqrt(var + self.eps)
 
         # Do not propagate gradients through style statistics
         mu = mu.detach()
@@ -84,35 +80,22 @@ class MixStyle(nn.Module):
         sigma2 = sigma[perm]
 
         # Beta interpolation
-        lam = self.beta.sample(
-            (B, 1, 1, 1)
-        ).to(
+        lam = self.beta.sample((B, 1, 1, 1)).to(
             device=x.device,
             dtype=x.dtype,
         )
 
-        mu_mix = (
-            lam * mu
-            + (1.0 - lam) * mu2
-        )
+        mu_mix = lam * mu + (1.0 - lam) * mu2
 
-        sigma_mix = (
-            lam * sigma
-            + (1.0 - lam) * sigma2
-        )
+        sigma_mix = lam * sigma + (1.0 - lam) * sigma2
 
-        return (
-            x_norm * sigma_mix
-            + mu_mix
-        )
+        return x_norm * sigma_mix + mu_mix
 
 
 class C3k2MixStyle(C3k2):
-    """
-    YOLO26 C3k2 + MixStyle.
+    """YOLO26 C3k2 + MixStyle.
 
-    The original C3k2 parameter structure is preserved,
-    which helps pretrained weight transfer.
+    The original C3k2 parameter structure is preserved, which helps pretrained weight transfer.
     """
 
     def __init__(
