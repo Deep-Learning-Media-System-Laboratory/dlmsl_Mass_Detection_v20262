@@ -1,7 +1,4 @@
-from pathlib import Path
-
 from ultralytics import YOLO
-
 
 # ============================================================
 # CONFIG
@@ -45,7 +42,6 @@ def main():
         task="detect",
     )
 
-
     # ========================================================
     # 2. LOAD YOLO26 PRETRAINED WEIGHTS
     # ========================================================
@@ -63,7 +59,6 @@ def main():
 
     model.load(PRETRAINED_WEIGHTS)
 
-
     # ========================================================
     # 3. PRINT MODEL INFORMATION
     # ========================================================
@@ -73,7 +68,6 @@ def main():
     print("=" * 80)
 
     model.info(detailed=True)
-
 
     # ========================================================
     # 4. CONFIRM MIXSTYLE EXISTS
@@ -86,18 +80,12 @@ def main():
     mixstyle_found = []
 
     for name, module in model.model.named_modules():
-
         class_name = module.__class__.__name__
 
         if "MixStyle" in class_name:
-            mixstyle_found.append(
-                (name, class_name)
-            )
+            mixstyle_found.append((name, class_name))
 
-            print(
-                f"FOUND: {name:<40} "
-                f"{class_name}"
-            )
+            print(f"FOUND: {name:<40} {class_name}")
 
     if not mixstyle_found:
         raise RuntimeError(
@@ -109,11 +97,7 @@ def main():
             "  4. yolo26n_mixstyle.yaml\n"
         )
 
-    print(
-        f"\nTotal MixStyle-related modules: "
-        f"{len(mixstyle_found)}"
-    )
-
+    print(f"\nTotal MixStyle-related modules: {len(mixstyle_found)}")
 
     # ========================================================
     # 5. TRAIN
@@ -124,43 +108,36 @@ def main():
     print("=" * 80)
 
     results = model.train(
-
         # ----------------------------------------------------
         # Dataset
         # ----------------------------------------------------
         data=DATA_YAML,
-
         # ----------------------------------------------------
         # Training duration
         # ----------------------------------------------------
         epochs=EPOCHS,
-
         # ----------------------------------------------------
         # Mammography resolution
         # ----------------------------------------------------
         imgsz=IMGSZ,
-
         # ----------------------------------------------------
         # Hardware
         # ----------------------------------------------------
         batch=BATCH,
         device=DEVICE,
         workers=WORKERS,
-
         # ----------------------------------------------------
         # Output
         # ----------------------------------------------------
         project=PROJECT,
         name=NAME,
         exist_ok=False,
-
         # ----------------------------------------------------
         # Pretrained model
         #
         # We already explicitly loaded yolo26n.pt above.
         # ----------------------------------------------------
         pretrained=True,
-
         # ----------------------------------------------------
         # Optimizer
         #
@@ -168,7 +145,6 @@ def main():
         # optimizer configuration.
         # ----------------------------------------------------
         optimizer="auto",
-
         # ----------------------------------------------------
         # Mammography augmentation
         #
@@ -178,21 +154,16 @@ def main():
         mosaic=0.0,
         mixup=0.0,
         copy_paste=0.0,
-
         # No vertical/horizontal flip initially
         flipud=0.0,
         fliplr=0.0,
-
         # No hue/saturation modification for grayscale
         hsv_h=0.0,
         hsv_s=0.0,
-
         # Small brightness/intensity augmentation
         hsv_v=0.1,
-
         # Existing moderate scale augmentation
         scale=0.25,
-
         # ----------------------------------------------------
         # Other geometry
         # ----------------------------------------------------
@@ -200,18 +171,15 @@ def main():
         translate=0.0,
         shear=0.0,
         perspective=0.0,
-        
         cutmix=0.0,
         erasing=0.0,
         amp=True,
-
         # ----------------------------------------------------
         # Training control
         # ----------------------------------------------------
         patience=100,
         save=True,
         save_period=-1,
-
         # ----------------------------------------------------
         # Validation
         #
@@ -219,13 +187,11 @@ def main():
         # validation uses model.eval().
         # ----------------------------------------------------
         val=True,
-
         # ----------------------------------------------------
         # Reproducibility
         # ----------------------------------------------------
         seed=0,
         deterministic=True,
-
         # ----------------------------------------------------
         # Logging / visualization
         # ----------------------------------------------------
