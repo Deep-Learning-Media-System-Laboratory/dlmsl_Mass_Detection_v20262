@@ -1,9 +1,6 @@
 from ultralytics import YOLO
 
-
-model = YOLO(
-    "ultralytics/cfg/models/26/yolo26n-msneck.yaml"
-)
+model = YOLO("ultralytics/cfg/models/26/yolo26n-msneck.yaml")
 
 model.load("yolo26n.pt")
 
