@@ -1,5 +1,5 @@
 """
-evaluate_scale.py
+evaluate_scale.py.
 
 Callable YOLO evaluation for SA-AutoAug search.
 
@@ -10,14 +10,16 @@ This file is adapted from your original evaluate (2).py script:
 - It avoids calling the custom AP value "mAP50" when the GT IoU threshold is 0.2.
 """
 
-import os
+from __future__ import annotations
+
 import csv
 import json
-from typing import Dict, List, Optional
+import os
 
 import cv2
 import numpy as np
 from tqdm import tqdm
+
 from ultralytics import YOLO
 
 try:
@@ -34,10 +36,8 @@ def ensure_dir(path: str) -> None:
         os.makedirs(path, exist_ok=True)
 
 
-def calculate_iou(box1: List[float], box2: List[float]) -> float:
-    """
-    Both boxes are [x, y, w, h] in absolute pixel format.
-    """
+def calculate_iou(box1: list[float], box2: list[float]) -> float:
+    """Both boxes are [x, y, w, h] in absolute pixel format."""
     x1, y1, w1, h1 = box1
     x2, y2, w2, h2 = box2
 
@@ -54,16 +54,14 @@ def calculate_iou(box1: List[float], box2: List[float]) -> float:
     return inter_area / float(union_area)
 
 
-def load_yolo_labels(label_path: str, img_w: int, img_h: int) -> List[List[float]]:
-    """
-    Read YOLO label .txt and convert normalized [cx, cy, w, h]
-    to absolute pixel [x_min, y_min, w, h].
+def load_yolo_labels(label_path: str, img_w: int, img_h: int) -> list[list[float]]:
+    """Read YOLO label .txt and convert normalized [cx, cy, w, h] to absolute pixel [x_min, y_min, w, h].
     """
     bboxes = []
     if not os.path.exists(label_path):
         return bboxes
 
-    with open(label_path, "r") as f:
+    with open(label_path) as f:
         for line in f:
             line = line.strip()
             if not line:
@@ -90,7 +88,7 @@ def load_yolo_labels(label_path: str, img_w: int, img_h: int) -> List[List[float
     return bboxes
 
 
-def get_scale_category_from_box(box: List[float]) -> str:
+def get_scale_category_from_box(box: list[float]) -> str:
     _, _, w, h = box
     area = w * h
     if area < 9764:
@@ -100,10 +98,9 @@ def get_scale_category_from_box(box: List[float]) -> str:
     return "large"
 
 
-def compute_ap_from_records(pred_records: List[Dict], gt_count: int) -> float:
-    """
-    Compute AP from records containing {"conf": float, "tp": 0/1}.
-    This uses the same precision-recall integration style as your original code.
+def compute_ap_from_records(pred_records: list[dict], gt_count: int) -> float:
+    """Compute AP from records containing {"conf": float, "tp": 0/1}. This uses the same precision-recall integration
+    style as your original code.
     """
     if not pred_records or gt_count <= 0:
         return 0.0
@@ -130,11 +127,9 @@ def compute_ap_from_records(pred_records: List[Dict], gt_count: int) -> float:
 
 
 def fbeta_score(precision: float, recall: float, beta: float = 2.0, eps: float = 1e-8) -> float:
-    """
-    Compute F-beta score.
+    """Compute F-beta score.
 
-    beta=1.0 gives F1.
-    beta=2.0 gives F2, which weights recall more strongly.
+    beta=1.0 gives F1. beta=2.0 gives F2, which weights recall more strongly.
     """
     precision = float(precision)
     recall = float(recall)
@@ -142,7 +137,7 @@ def fbeta_score(precision: float, recall: float, beta: float = 2.0, eps: float =
     if precision <= 0.0 and recall <= 0.0:
         return 0.0
 
-    beta2 = beta ** 2
+    beta2 = beta**2
     return float((1.0 + beta2) * precision * recall / (beta2 * precision + recall + eps))
 
 
@@ -150,7 +145,7 @@ def evaluate_model(
     model_path: str,
     val_dir: str,
     split: str = "val",
-    output_folder: Optional[str] = None,
+    output_folder: str | None = None,
     imgsz: int = 1280,
     conf_thres: float = 0.3,
     pred_iou_thres: float = 0.4,
@@ -159,13 +154,10 @@ def evaluate_model(
     draw_annotations: bool = False,
     save_outputs: bool = True,
     verbose: bool = True,
-) -> Dict:
-    """
-    Evaluate YOLO model and return overall + scale-wise metrics.
+) -> dict:
+    """Evaluate YOLO model and return overall + scale-wise metrics.
 
-    Directory expected:
-      val_dir/images/<split>
-      val_dir/labels/<split>
+    Directory expected: val_dir/images/<split> val_dir/labels/<split>
     """
     if output_folder is None:
         output_folder = f"{split}_result"
@@ -187,10 +179,7 @@ def evaluate_model(
     if not os.path.exists(images_dir):
         raise FileNotFoundError(f"Image split folder not found: {images_dir}")
 
-    image_files = sorted([
-        f for f in os.listdir(images_dir)
-        if os.path.splitext(f)[1].lower() in IMAGE_EXTS
-    ])
+    image_files = sorted([f for f in os.listdir(images_dir) if os.path.splitext(f)[1].lower() in IMAGE_EXTS])
 
     if not image_files:
         raise RuntimeError(f"No images found in {images_dir}")
@@ -322,38 +311,42 @@ def evaluate_model(
         img_fn = max(0, len(p_bboxes_gt) - img_tp)
 
         for p in pred_info_list:
-            csv_rows.append({
-                "image": file_name,
-                "pred_x": round(p[0], 2),
-                "pred_y": round(p[1], 2),
-                "pred_w": round(p[2], 2),
-                "pred_h": round(p[3], 2),
-                "conf": round(p[4], 4),
-                "best_iou": round(p[5], 4),
-                "tp": p[6],
-                "scale": p[7],
-            })
-
-        img_records.append({
-            "image": file_name,
-            "gt_boxes": len(p_bboxes_gt),
-            "tp": img_tp,
-            "fp": img_fp,
-            "fn": img_fn,
-            "predictions": [
+            csv_rows.append(
                 {
-                    "x": round(p[0], 2),
-                    "y": round(p[1], 2),
-                    "w": round(p[2], 2),
-                    "h": round(p[3], 2),
+                    "image": file_name,
+                    "pred_x": round(p[0], 2),
+                    "pred_y": round(p[1], 2),
+                    "pred_w": round(p[2], 2),
+                    "pred_h": round(p[3], 2),
                     "conf": round(p[4], 4),
-                    "iou": round(p[5], 4),
+                    "best_iou": round(p[5], 4),
                     "tp": p[6],
                     "scale": p[7],
                 }
-                for p in pred_info_list
-            ],
-        })
+            )
+
+        img_records.append(
+            {
+                "image": file_name,
+                "gt_boxes": len(p_bboxes_gt),
+                "tp": img_tp,
+                "fp": img_fp,
+                "fn": img_fn,
+                "predictions": [
+                    {
+                        "x": round(p[0], 2),
+                        "y": round(p[1], 2),
+                        "w": round(p[2], 2),
+                        "h": round(p[3], 2),
+                        "conf": round(p[4], 4),
+                        "iou": round(p[5], 4),
+                        "tp": p[6],
+                        "scale": p[7],
+                    }
+                    for p in pred_info_list
+                ],
+            }
+        )
 
         if draw_annotations and save_outputs:
             for p in pred_info_list:
@@ -361,15 +354,31 @@ def evaluate_model(
                 color = (0, 255, 0) if tp_flag else (0, 165, 255)
                 cv2.rectangle(prep_img, (int(px), int(py)), (int(px + pw), int(py + ph)), color, 2)
                 label = f"{scale} Conf:{conf:.2f} IoU:{best_iou:.2f}"
-                cv2.putText(prep_img, label, (int(px), max(int(py) - 10, 12)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 1, cv2.LINE_AA)
+                cv2.putText(
+                    prep_img,
+                    label,
+                    (int(px), max(int(py) - 10, 12)),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.45,
+                    color,
+                    1,
+                    cv2.LINE_AA,
+                )
 
             for gt_box in p_bboxes_gt:
                 gx, gy, gw, gh = gt_box
                 scale = get_scale_category_from_box(gt_box)
                 cv2.rectangle(prep_img, (int(gx), int(gy)), (int(gx + gw), int(gy + gh)), (255, 0, 0), 2)
-                cv2.putText(prep_img, f"GT-{scale}", (int(gx), int(gy) + 20),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 0), 1, cv2.LINE_AA)
+                cv2.putText(
+                    prep_img,
+                    f"GT-{scale}",
+                    (int(gx), int(gy) + 20),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.45,
+                    (255, 0, 0),
+                    1,
+                    cv2.LINE_AA,
+                )
 
             out_path = os.path.join(output_folder, stem + "_annotated.jpg")
             cv2.imwrite(out_path, prep_img)
