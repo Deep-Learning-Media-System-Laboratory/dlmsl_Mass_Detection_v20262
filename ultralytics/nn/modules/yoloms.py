@@ -37,8 +37,8 @@ def _set_bn_cfg(module: nn.Module, momentum: float = 0.03, eps: float = 0.001) -
 class GQL(nn.Module):
     """Global Query Layer used by YOLO-MS.
 
-    The query is owned by YOLOMSBackbone and shared across the attention-enabled
-    MSBlocks in backbone stages 2, 3, and 4.
+    The query is owned by YOLOMSBackbone and shared across the attention-enabled MSBlocks in backbone stages 2, 3, and
+    4.
     """
 
     def __init__(self, dim: int, length: int = 3, size: int = 4) -> None:
@@ -62,9 +62,7 @@ class GQL(nn.Module):
                 f"GQL query dimension mismatch: query has {query_dim}, pooled feature has {pooled.shape[1]}."
             )
         if channels % query_count != 0:
-            raise RuntimeError(
-                f"GQL input channels={channels} must be divisible by query count={query_count}."
-            )
+            raise RuntimeError(f"GQL input channels={channels} must be divisible by query count={query_count}.")
 
         weights = torch.matmul(query.unsqueeze(0).expand(batch, -1, -1), pooled).sigmoid()
         weights = weights.repeat(1, channels // query_count, 1).unsqueeze(-1)
@@ -139,9 +137,7 @@ class MSBlock(nn.Module):
         if branch_count == 0:
             raise ValueError("MSBlock requires at least one branch.")
         if not 0 <= start_branch_id < branch_count:
-            raise ValueError(
-                f"start_branch_id={start_branch_id} is invalid for {branch_count} branches."
-            )
+            raise ValueError(f"start_branch_id={start_branch_id} is invalid for {branch_count} branches.")
         if layers_num < 1:
             raise ValueError("layers_num must be at least 1.")
 
@@ -149,9 +145,7 @@ class MSBlock(nn.Module):
         # self.in_channel = int((in_channel * len(kernel_sizes)) * down_ratio)
         internal_channels = int((c1 * branch_count) * float(down_ratio))
         if internal_channels < branch_count:
-            raise ValueError(
-                f"Internal channels={internal_channels} are too small for {branch_count} branches."
-            )
+            raise ValueError(f"Internal channels={internal_channels} are too small for {branch_count} branches.")
 
         # Official configs use equal [1, 1, 1] branch ratios. Allocate any
         # rounding remainder to the final branch for robustness.
@@ -163,8 +157,7 @@ class MSBlock(nn.Module):
         for i in range(start_branch_id, branch_count):
             if branch_channels[i] != branch_channels[i - 1]:
                 raise ValueError(
-                    "Cross-branch addition requires equal adjacent branch channels; "
-                    f"received {branch_channels}."
+                    f"Cross-branch addition requires equal adjacent branch channels; received {branch_channels}."
                 )
 
         self.start_branch_id = int(start_branch_id)
@@ -260,10 +253,8 @@ class YOLOMSBackbone(nn.Module):
 
     Returns:
         Tuple containing P3/8, P4/16, and P5/32 feature maps.
-
-    Keeping the complete backbone inside one Ultralytics module is deliberate:
-    the MMYOLO implementation creates one trainable query and shares it among
-    the GQL modules in stages 2, 3, and 4.
+        Keeping the complete backbone inside one Ultralytics module is deliberate: the MMYOLO implementation creates one
+        trainable query and shares it among the GQL modules in stages 2, 3, and 4.
     """
 
     def __init__(
@@ -368,17 +359,14 @@ class MSIndex(nn.Module):
 class MSHeadConv(nn.Module):
     """YOLO-MS head convolution.
 
-    The official implementation uses groups=1 for 3x3 kernels and the
-    configured groups (4) for the 5x5 and 7x7 kernels.
+    The official implementation uses groups=1 for 3x3 kernels and the configured groups (4) for the 5x5 and 7x7 kernels.
     """
 
     def __init__(self, c1: int, c2: int, kernel_size: int, groups: int = 4) -> None:
         super().__init__()
         actual_groups = 1 if int(kernel_size) == 3 else int(groups)
         if c1 % actual_groups != 0 or c2 % actual_groups != 0:
-            raise ValueError(
-                f"Head convolution channels ({c1}, {c2}) must be divisible by groups={actual_groups}."
-            )
+            raise ValueError(f"Head convolution channels ({c1}, {c2}) must be divisible by groups={actual_groups}.")
         self.conv = Conv(c1, c2, k=int(kernel_size), s=1, g=actual_groups)
         _set_bn_cfg(self)
 
