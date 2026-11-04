@@ -5,7 +5,6 @@ import torch
 from ultralytics import YOLO
 from ultralytics.nn.modules import C3k2MS
 
-
 MODEL = "ultralytics/cfg/models/26/yolo26n-c3k2ms.yaml"
 
 
@@ -18,16 +17,10 @@ def main() -> None:
     for layer_index in expected_layers:
         layer = network.model[layer_index]
 
-        print(
-            f"Layer {layer_index}: "
-            f"{layer.__class__.__name__}"
-        )
+        print(f"Layer {layer_index}: {layer.__class__.__name__}")
 
         if not isinstance(layer, C3k2MS):
-            raise RuntimeError(
-                f"Expected C3k2MS at layer {layer_index}, "
-                f"found {layer.__class__.__name__}"
-            )
+            raise RuntimeError(f"Expected C3k2MS at layer {layer_index}, found {layer.__class__.__name__}")
 
     x = torch.zeros(1, 3, 640, 640)
 
