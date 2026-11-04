@@ -1,0 +1,14 @@
+train:
+  - /home/yeozekiel/yolo/dataset_with_hospital_cleaned/images/train_full
+  - /home/yeozekiel/yolo/hospital_yolo_dataset_v5/images/train
+
+val: 
+  - /home/yeozekiel/yolo/hospital_yolo_dataset_v5/images/test
+  # - /home/yeozekiel/yolo/dataset_without_embed_cmmd_refined/images/newbenchmark_v2.2
+
+test: ''
+
+names:
+  0: mass
+
+nc: 1

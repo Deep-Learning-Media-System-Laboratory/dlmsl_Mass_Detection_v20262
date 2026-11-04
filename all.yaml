@@ -1,0 +1,8 @@
+# path: /data/nas07_new/PersonalData/yeozekiel/yolo26_new/dataset_preprocessed
+train: /home/yeozekiel/yolo/dataset_without_embed_cmmd_refined/images/train_full
+# val: /data/nas07_new/PersonalData/yeozekiel/yolo26_new/dataset_preprocessed/images/newbenchmark_v2.2
+val: /home/yeozekiel/yolo/dataset_without_embed_cmmd_refined/images/newbenchmark_v2.2
+test: 
+
+names:
+  0: mass
