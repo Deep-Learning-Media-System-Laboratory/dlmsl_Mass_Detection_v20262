@@ -1,10 +1,6 @@
 from ultralytics import YOLO
 
-
-MODEL_YAML = (
-    "ultralytics/cfg/models/26/"
-    "yolo26n-c3k2ms-deeplite.yaml"
-)
+MODEL_YAML = "ultralytics/cfg/models/26/yolo26n-c3k2ms-deeplite.yaml"
 
 
 def main() -> None:
