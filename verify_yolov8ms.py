@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 
 import torch
 
@@ -31,10 +30,7 @@ def main() -> None:
 
     assert len(backbones) == 1, f"Expected one YOLOMSBackbone, found {len(backbones)}"
     assert len(heads) == 1, f"Expected one YOLOMSDetect, found {len(heads)}"
-    assert len(msblocks) == 8, (
-        "Expected four backbone MSBlocks and four neck MSBlocks, "
-        f"found {len(msblocks)}"
-    )
+    assert len(msblocks) == 8, f"Expected four backbone MSBlocks and four neck MSBlocks, found {len(msblocks)}"
 
     backbone = backbones[0]
     query_ids = {
