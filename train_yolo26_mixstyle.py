@@ -14,13 +14,12 @@ MODEL_YAML = "ultralytics/cfg/models/26/yolo26n-mixstyle.yaml"
 PRETRAINED_WEIGHTS = "yolo26n.pt"
 
 # Your mammography dataset YAML
-# DATA_YAML = "with-hospital.yaml"
-DATA_YAML = "thesis.yaml"
+DATA_YAML = "with-hospital.yaml"
 
 # Output
 PROJECT = "runs/yolo26_mixstyle"
-# NAME = "mixstyle_layer2_layer4-no_hos_legacy"
-NAME = "mixstyle_layer2_layer4-thesis-fix"
+
+NAME = "mixstyle_layer2_layer4"
 
 # Training
 EPOCHS = 500

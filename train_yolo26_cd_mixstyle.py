@@ -18,13 +18,12 @@ MODEL_YAML = (
 
 PRETRAINED_WEIGHTS = (
     "yolo26n.pt"
-    # "runs/detect/runs/yolo26_cd_mixstyle/cd_mixstyle_layer2_layer4_new_retrain-4/weights/last.pt"
 )
 
-DATA_YAML = "all-supress100.yaml"
+DATA_YAML = "with-hospital.yaml"
 
 DOMAIN_MANIFEST = (
-    "allsup100_domain_manifest.csv"
+    "domain_manifest.csv"
 )
 
 
@@ -33,7 +32,7 @@ PROJECT = (
 )
 
 NAME = (
-    "cd_mixstyle_layer2_layer4_allsup100"
+    "cd_mixstyle_layer2_layer4"
 )
 
 
