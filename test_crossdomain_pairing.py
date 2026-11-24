@@ -4,15 +4,19 @@ from ultralytics.nn.modules.crossdomain_mixstyle import (
     CrossDomainMixStyle,
 )
 
-
 # ============================================================
 # Intentionally imbalanced
 # ============================================================
 
 domain_ids = torch.tensor(
     [
-        0, 0, 0, 0, 0,
-        1, 1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
         2,
         3,
     ],
@@ -35,31 +39,14 @@ total_pairs = 0
 
 
 for _ in range(10000):
-
-    perm = (
-        module
-        .build_cross_domain_perm(
-            domain_ids
-        )
-    )
+    perm = module.build_cross_domain_perm(domain_ids)
 
     source = domain_ids
-    donor = domain_ids[
-        perm
-    ]
+    donor = domain_ids[perm]
 
-    same_domain += int(
-        (
-            source
-            == donor
-        )
-        .sum()
-        .item()
-    )
+    same_domain += int((source == donor).sum().item())
 
-    total_pairs += (
-        len(domain_ids)
-    )
+    total_pairs += len(domain_ids)
 
 
 print(
@@ -90,13 +77,9 @@ x = torch.randn(
 
 module.train()
 
-module.set_strict_runtime(
-    True
-)
+module.set_strict_runtime(True)
 
-module.set_domain_ids(
-    domain_ids
-)
+module.set_domain_ids(domain_ids)
 
 y = module(x)
 
@@ -130,15 +113,7 @@ assert torch.equal(
 
 
 print()
-print(
-    "PASS:"
-)
-print(
-    "- no same-domain donor"
-)
-print(
-    "- feature changed during training"
-)
-print(
-    "- feature unchanged during evaluation"
-)
+print("PASS:")
+print("- no same-domain donor")
+print("- feature changed during training")
+print("- feature unchanged during evaluation")

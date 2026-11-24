@@ -19,9 +19,6 @@ from ultralytics.nn.modules import (
     C2,
     C2PSA,
     C3,
-
-    C3k2MS,
-
     C3TR,
     ELAN1,
     OBB,
@@ -41,6 +38,11 @@ from ultralytics.nn.modules import (
     C2fPSA,
     C3Ghost,
     C3k2,
+    C3k2AdaptiveCDMixStyle,
+    C3k2AdaptivePartnerMixStyle,
+    C3k2CrossDomainMixStyle,
+    C3k2MixStyle,
+    C3k2MS,
     C3x,
     CBFuse,
     CBLinear,
@@ -61,17 +63,8 @@ from ultralytics.nn.modules import (
     ImagePoolingAttn,
     Index,
     LRPCHead,
-
     MSBlock,
     MSIndex,
-    YOLOMSBackbone,
-    YOLOMSDetect,
-
-    C3k2MixStyle,
-    C3k2CrossDomainMixStyle,
-    C3k2AdaptiveCDMixStyle,
-    C3k2AdaptivePartnerMixStyle,
-
     Pose,
     Pose26,
     RepC3,
@@ -89,6 +82,8 @@ from ultralytics.nn.modules import (
     YOLOEDetect,
     YOLOESegment,
     YOLOESegment26,
+    YOLOMSBackbone,
+    YOLOMSDetect,
     v10Detect,
 )
 from ultralytics.utils import (
@@ -2002,16 +1997,13 @@ def parse_model(d, ch, verbose=True):
             C2,
             C2f,
             C3k2,
-
             C3k2MS,
             MSBlock,
             MSIndex,
-
             C3k2MixStyle,
             C3k2CrossDomainMixStyle,
             C3k2AdaptiveCDMixStyle,
             C3k2AdaptivePartnerMixStyle,
-            
             RepNCSPELAN4,
             ELAN1,
             ADown,
@@ -2038,16 +2030,12 @@ def parse_model(d, ch, verbose=True):
             C2,
             C2f,
             C3k2,
-            
             C3k2MS,
-            
             C2fAttn,
-
             C3k2MixStyle,
             C3k2CrossDomainMixStyle,
             C3k2AdaptiveCDMixStyle,
             C3k2AdaptivePartnerMixStyle,
-            
             C3,
             C3TR,
             C3Ghost,
@@ -2088,7 +2076,7 @@ def parse_model(d, ch, verbose=True):
             args = [ch[f], *args]
 
         elif m in base_modules:
-        # if m in base_modules:
+            # if m in base_modules:
             c1, c2 = ch[f], args[0]
             if m is not Classify:  # Classify() output must stay at nc; every other layer scales by width
                 c2 = make_divisible(min(c2, max_channels) * width, 8)
@@ -2143,7 +2131,19 @@ def parse_model(d, ch, verbose=True):
             args.extend([reg_max, end2end, [ch[x] for x in f]])
             if m is Segment or m is YOLOESegment or m is Segment26 or m is YOLOESegment26:
                 args[2] = make_divisible(min(args[2], max_channels) * width, 8)
-            if m in {Detect, YOLOEDetect, Segment, Segment26, YOLOESegment, YOLOESegment26, Pose, Pose26, OBB, OBB26, YOLOMSDetect}:
+            if m in {
+                Detect,
+                YOLOEDetect,
+                Segment,
+                Segment26,
+                YOLOESegment,
+                YOLOESegment26,
+                Pose,
+                Pose26,
+                OBB,
+                OBB26,
+                YOLOMSDetect,
+            }:
                 m.legacy = legacy
         elif m is Depth:
             args = [*args[:1], [ch[x] for x in f]]  # c_mid, ch tuple; drops the legacy mode arg old checkpoints store

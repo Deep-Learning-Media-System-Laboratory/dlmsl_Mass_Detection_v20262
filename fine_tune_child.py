@@ -1,5 +1,5 @@
 """
-fine_tune_child.py
+fine_tune_child.py.
 
 Callable YOLO fine-tuning function for SA-AutoAug policy search.
 
@@ -8,8 +8,9 @@ This file is adapted from your original fine-tune.py script:
 - It returns the best and last model paths for the child model.
 """
 
+from __future__ import annotations
+
 import os
-from typing import Dict
 
 from ultralytics import YOLO
 
@@ -30,12 +31,10 @@ def fine_tune_child_model(
     plots: bool = False,
     val: bool = True,
     exist_ok: bool = True,
-) -> Dict:
-    """
-    Fine-tune one child model from the same plain/baseline model.
+) -> dict:
+    """Fine-tune one child model from the same plain/baseline model.
 
-    For search, keep epochs small, e.g. 3-5.
-    For final training after the best policy is found, use longer epochs.
+    For search, keep epochs small, e.g. 3-5. For final training after the best policy is found, use longer epochs.
     """
     print(f"[TRAIN] Base model: {model_path}")
     print(f"[TRAIN] Data YAML : {data_yaml}")
@@ -54,14 +53,12 @@ def fine_tune_child_model(
         patience=patience,
         device=device,
         workers=workers,
-
         # Optimizer
         optimizer="AdamW",
         lr0=lr0,
         lrf=lrf,
         cos_lr=True,
         weight_decay=0.0005,
-
         # Disable Ultralytics built-in augmentations.
         # The policy-specific dataset already contains the augmentation.
         mosaic=0.0,
@@ -69,23 +66,18 @@ def fine_tune_child_model(
         cutmix=0.0,
         copy_paste=0.0,
         erasing=0.0,
-
         hsv_h=0.0,
         hsv_s=0.0,
         hsv_v=0.0,
-
         degrees=0.0,
         translate=0.0,
         scale=0.0,
         shear=0.0,
         perspective=0.0,
-
         fliplr=0.0,
         flipud=0.0,
-
         # Detection settings
         max_det=300,
-
         # Logging
         plots=plots,
         val=val,

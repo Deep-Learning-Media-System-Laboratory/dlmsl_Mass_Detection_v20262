@@ -26,12 +26,13 @@ This repository provides an implementation of **YOLO26** equipped with **MixStyl
 
 Mammography imaging is subject to severe domain shifts due to varying scanner vendors, acquisition protocols, breast density variations, and institutional differences. This repository addresses domain shift using feature-level style mixing:
 
-| Method | Behavior | Use Case |
-|---|---|---|
-| **Standard MixStyle** | Mixes instance feature statistics ($\mu, \sigma$) between random sample pairs within the mini-batch using Beta interpolation. | General feature perturbation and regularization. |
-| **Cross-Domain MixStyle (CDMS)** | Enforces that the style donor image **must come from a different domain/dataset** than the source image. | Eliminating domain-specific biases and learning domain-invariant mass representations. |
+| Method                           | Behavior                                                                                                                      | Use Case                                                                               |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| **Standard MixStyle**            | Mixes instance feature statistics ($\mu, \sigma$) between random sample pairs within the mini-batch using Beta interpolation. | General feature perturbation and regularization.                                       |
+| **Cross-Domain MixStyle (CDMS)** | Enforces that the style donor image **must come from a different domain/dataset** than the source image.                      | Eliminating domain-specific biases and learning domain-invariant mass representations. |
 
 Both methods:
+
 - Are injected into the YOLO26 backbone via custom C3k2 blocks (`C3k2MixStyle` and `C3k2CrossDomainMixStyle`) at stages P2 and P4 (layers 2 and 4).
 - Operate **only during training**. They are automatically bypassed during validation and inference (`model.eval()`).
 
@@ -63,12 +64,14 @@ Both methods:
 ## Environment Setup
 
 1. **Clone the repository and navigate into the workspace:**
+
    ```bash
    cd dlmsl_Mass_Detection_v20262
    ```
 
 2. **Install dependencies:**
    Ensure you have Python 3.8+ and PyTorch with CUDA support installed:
+
    ```bash
    pip install -e .
    ```
@@ -83,9 +86,9 @@ Both methods:
 Dataset definitions follow the standard YOLO format defined in a `.yaml` file (e.g., `data.yaml` or `with-hospital.yaml`):
 
 ```yaml
-path: /path/to/dataset_root    # Optional dataset root
-train: images/train            # Can be a directory path or a .txt list of image paths
-val: images/val                # Validation image directory or .txt list
+path: /path/to/dataset_root # Optional dataset root
+train: images/train # Can be a directory path or a .txt list of image paths
+val: images/val # Validation image directory or .txt list
 names:
   0: mass
 ```
@@ -97,6 +100,7 @@ names:
 Standard MixStyle mixes feature representations between randomly chosen sample pairs within the mini-batch.
 
 ### 1. Configure `train_yolo26_mixstyle.py`
+
 Open `train_yolo26_mixstyle.py` and adjust the configuration parameters:
 
 ```python
@@ -113,19 +117,22 @@ DATA_YAML = "path/to/your_dataset.yaml"
 EPOCHS = 500
 IMGSZ = 1280
 BATCH = 16
-DEVICE = "0"        # GPU ID or "0,1"
+DEVICE = "0"  # GPU ID or "0,1"
 WORKERS = 4
 PROJECT = "runs/yolo26_mixstyle"
 NAME = "mixstyle_experiment"
 ```
 
 ### 2. Launch Training
+
 Run the training script:
+
 ```bash
 python train_yolo26_mixstyle.py
 ```
 
 The script will:
+
 1. Build YOLO26 with `C3k2MixStyle` layers.
 2. Load pretrained weights from `yolo26n.pt`.
 3. Check and confirm `MixStyle` module presence in the backbone.
@@ -142,6 +149,7 @@ Cross-Domain MixStyle requires image domain labels so that style statistics are 
 Before training CDMS, you must generate a CSV manifest that maps each training image to its corresponding domain identifier.
 
 #### 1. Configure `make_domain_manifest.py`
+
 Open `make_domain_manifest.py` and configure the dataset source and output CSV filenames:
 
 ```python
@@ -151,33 +159,37 @@ UNKNOWN_CSV = "domain_manifest_unknown.csv"
 ```
 
 #### 2. Verify Domain Detection Rules
+
 `make_domain_manifest.py` detects domain tags by examining filenames and path patterns in `detect_domain(image_path)`:
 
-| Domain | Matching Patterns |
-|---|---|
-| `vindr` | `vindr_`, `vindr-n_` |
-| `cmmd` | `cmmd_`, `cmmd-n_`, `d1-`, `d2-` |
-| `cbis` | `cbis_`, `mass-training_`, `mass-testing_` |
-| `inbreast` | `inbreast_`, 8-digit numeric stems |
-| `embed` | `embed_`, `embed-n_` |
-| `rsna` | `rsna_`, `rsna-n_` |
-| `bcs-dbt` | `bcs_`, `bcs-dbt_`, `bcsdbt-`, `bcsdbt_` |
-| `hospital` | `hospital_`, `done_` |
+| Domain         | Matching Patterns                            |
+| -------------- | -------------------------------------------- |
+| `vindr`        | `vindr_`, `vindr-n_`                         |
+| `cmmd`         | `cmmd_`, `cmmd-n_`, `d1-`, `d2-`             |
+| `cbis`         | `cbis_`, `mass-training_`, `mass-testing_`   |
+| `inbreast`     | `inbreast_`, 8-digit numeric stems           |
+| `embed`        | `embed_`, `embed-n_`                         |
+| `rsna`         | `rsna_`, `rsna-n_`                           |
+| `bcs-dbt`      | `bcs_`, `bcs-dbt_`, `bcsdbt-`, `bcsdbt_`     |
+| `hospital`     | `hospital_`, `done_`                         |
 | `hospital-new` | `b20260814_`, `b202511_`, `b20260202_`, etc. |
-| `hospital-old` | `hospital-old_`, `hospital_phuc_`, `puc_` |
-| `bcc` / `img` | `bcc_`, `img_` |
-| `synthetic` | `synthetic_` |
+| `hospital-old` | `hospital-old_`, `hospital_phuc_`, `puc_`    |
+| `bcc` / `img`  | `bcc_`, `img_`                               |
+| `synthetic`    | `synthetic_`                                 |
 
 > [!TIP]
 > If your dataset uses custom image naming conventions, add your prefix rules to `detect_domain()` in `make_domain_manifest.py`.
 
 #### 3. Run the Manifest Generator
+
 Execute:
+
 ```bash
 python make_domain_manifest.py
 ```
 
 The script prints a summary table:
+
 ```text
 ======================================================================
 DOMAIN MANIFEST SUMMARY
@@ -208,10 +220,13 @@ MANIFEST = "domain_manifest.csv"
 ```
 
 Run:
+
 ```bash
 python verify_domain_manifest.py
 ```
+
 Expected output:
+
 ```text
 Rows: 5910
 Duplicate paths: 0
@@ -226,6 +241,7 @@ PASS: manifest verified.
 ### Step 3: Run Cross-Domain Training (`train_yolo26_cd_mixstyle.py`)
 
 #### 1. Configure `train_yolo26_cd_mixstyle.py`
+
 Edit the configuration settings in `train_yolo26_cd_mixstyle.py`:
 
 ```python
@@ -245,12 +261,15 @@ WORKERS = 4
 ```
 
 #### 2. Launch Training
+
 Run:
+
 ```bash
 python train_yolo26_cd_mixstyle.py
 ```
 
 #### How it works under the hood:
+
 1. Sets `os.environ["CDMS_DOMAIN_MANIFEST"] = DOMAIN_MANIFEST`.
 2. Passes `DomainMixStyleTrainer` to `model.train(trainer=DomainMixStyleTrainer, ...)`.
 3. `DomainYOLODataset` maps each training image to its integer domain label.
@@ -272,19 +291,24 @@ python train_yolo26_cd_mixstyle.py
 ## Configuration & Hyperparameter Details
 
 ### Mammography Augmentation Guidelines
+
 Mammography images require careful augmentation choices so as not to distort micro-calcifications or subtle mass margins:
+
 - `mosaic=0.0`, `mixup=0.0`, `copy_paste=0.0`: Disabled to prevent destructive artifacts.
 - `hsv_h=0.0`, `hsv_s=0.0`: Kept at 0 for grayscale mammograms.
 - `hsv_v=0.1`: Gentle contrast/brightness jitter.
 - `scale=0.25`: Moderate scale jitter.
 
 ### Single-Domain Fine-Tuning (Optional)
+
 If fine-tuning an existing CDMS checkpoint on a dataset containing only one domain, set:
+
 ```bash
-export CDMS_ALLOW_SINGLE_DOMAIN=1   # Linux / macOS
+export CDMS_ALLOW_SINGLE_DOMAIN=1 # Linux / macOS
 # or in PowerShell:
 $env:CDMS_ALLOW_SINGLE_DOMAIN="1"
 ```
+
 In this mode, CDMS logs a warning and leaves features untouched when no different donor domain is present.
 
 ---
@@ -292,6 +316,7 @@ In this mode, CDMS logs a warning and leaves features untouched when no differen
 ## Evaluation & Post-Processing
 
 This repository provides two specialized evaluation scripts tailored for mammography mass detection:
+
 - **`evaluate.py`**: Detailed single-threshold evaluation with per-box CSV logging, JSON metrics summary, and annotated image visualizations.
 - **`evaluate_nms_conf_sweep.py`**: Multi-threshold grid sweep over NMS IoU and confidence values to identify the optimal operating point (maximizing F1-score or AP).
 
@@ -302,7 +327,9 @@ This repository provides two specialized evaluation scripts tailored for mammogr
 `evaluate.py` evaluates a trained `.pt` or exported `.onnx` model on a designated dataset split and produces quantitative metrics as well as visual inspection images.
 
 #### Dataset Directory Layout
+
 The evaluation script expects the dataset directory structure:
+
 ```text
 <VAL_DIR>/
 ├── images/
@@ -310,40 +337,45 @@ The evaluation script expects the dataset directory structure:
 └── labels/
     └── <SPLIT>/          # e.g., test/, val/
 ```
-*(If `SPLIT = "all"`, it looks directly inside `<VAL_DIR>/images` and `<VAL_DIR>/labels`.)*
+
+_(If `SPLIT = "all"`, it looks directly inside `<VAL_DIR>/images` and `<VAL_DIR>/labels`.)_
 
 #### Configuration Parameters
+
 Open `evaluate.py` and adjust the configuration block at the top:
 
 ```python
 # Model and dataset paths
 MODEL_PATH = "runs/yolo26_cd_mixstyle/cd_mixstyle_experiment/weights/best.pt"
 VAL_DIR = "/path/to/mammography_dataset"
-SPLIT = "test"                     # Options: "test", "val", "train", or "all"
+SPLIT = "test"  # Options: "test", "val", "train", or "all"
 
 # Detection parameters
 TARGET_IMG_SIZE = 1280
-CONF_THRES = 0.3                   # Confidence cutoff for predictions
-IOU_THRES = 0.5                    # NMS IoU threshold for overlapping predictions
-GT_IOU_THRES = 0.2                 # IoU threshold to count prediction as TP (standard for breast masses)
+CONF_THRES = 0.3  # Confidence cutoff for predictions
+IOU_THRES = 0.5  # NMS IoU threshold for overlapping predictions
+GT_IOU_THRES = 0.2  # IoU threshold to count prediction as TP (standard for breast masses)
 
 # Hardware and output
-DEVICE = "0"                       # GPU ID or "cpu"
-DRAW_ANNOTATIONS = True            # Set True to save annotated images
+DEVICE = "0"  # GPU ID or "cpu"
+DRAW_ANNOTATIONS = True  # Set True to save annotated images
 OUTPUT_FOLDER = "evaluation_results/single_run"
 ```
 
 #### Run Evaluation
+
 Execute:
+
 ```bash
 python evaluate.py
 ```
 
 #### Outputs in `OUTPUT_FOLDER`
+
 1. **Console Summary**: Displays TP, FP, FN, Precision, Recall, F1 Score, and mAP@50.
 2. **`results_summary.json`**: Complete metrics summary and per-image prediction counts.
 3. **`results_per_box.csv`**: Granular per-box CSV with columns `[image, pred_x, pred_y, pred_w, pred_h, conf, best_iou, tp]`.
-4. **Annotated Images (`*_annotated.jpg`)** *(if `DRAW_ANNOTATIONS = True`)*:
+4. **Annotated Images (`*_annotated.jpg`)** _(if `DRAW_ANNOTATIONS = True`)_:
    - 🟩 **Green boxes**: True Positives (TP, matching GT with IoU > `GT_IOU_THRES`).
    - 🟧 **Orange boxes**: False Positives (FP).
    - 🟦 **Blue boxes**: Ground Truth (GT) annotations.
@@ -355,9 +387,11 @@ python evaluate.py
 In clinical applications, finding the best balance between sensitivity (Recall) and false alarms (Precision) is critical. `evaluate_nms_conf_sweep.py` performs a grid search across multiple NMS IoU thresholds and confidence thresholds.
 
 #### Efficient Sweep Design
+
 The script runs inference once per NMS IoU threshold at `INFER_CONF_FLOOR = min(CONF_THRESHOLDS)` and filters upward across confidence levels, significantly speeding up large sweeps without redundant inference passes.
 
 #### Configuration Parameters
+
 Open `evaluate_nms_conf_sweep.py` and configure the sweep ranges:
 
 ```python
@@ -367,22 +401,25 @@ SPLIT = "test"
 
 # Sweep grids
 NMS_IOU_THRESHOLDS = [0.10, 0.20, 0.30, 0.40, 0.50]
-CONF_THRESHOLDS    = [0.10, 0.20, 0.30, 0.40, 0.50]
+CONF_THRESHOLDS = [0.10, 0.20, 0.30, 0.40, 0.50]
 
-GT_IOU_THRES = 0.2                 # Fixed ground truth matching IoU
+GT_IOU_THRES = 0.2  # Fixed ground truth matching IoU
 TARGET_IMG_SIZE = 1280
 DEVICE = "0"
-DRAW_ANNOTATIONS = False           # Recommended False during grid sweeps
+DRAW_ANNOTATIONS = False  # Recommended False during grid sweeps
 OUTPUT_FOLDER = "evaluation_results/nms_conf_sweep"
 ```
 
 #### Run the Sweep
+
 Execute:
+
 ```bash
 python evaluate_nms_conf_sweep.py
 ```
 
 #### Outputs
+
 1. **Matrix Table in Console**:
    ```text
    =========================================================================================================

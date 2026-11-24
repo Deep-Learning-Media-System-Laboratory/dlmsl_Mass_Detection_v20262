@@ -14,13 +14,10 @@ os.environ["CDMS_DOMAIN_MANIFEST"] = (
 # os.environ["CDMS_ALLOW_SINGLE_DOMAIN"]="1"
 
 
-from ultralytics import YOLO
-
 # Replace this import with the filename where
 # you saved DomainMixStyleTrainer.
-
 from cd_mixstyle_trainer import DomainMixStyleTrainer
-
+from ultralytics import YOLO
 
 BEST_MODEL = (
     "runs/detect/runs/yolo26_cd_mixstyle/"
@@ -35,40 +32,30 @@ model = YOLO(BEST_MODEL)
 
 model.train(
     trainer=DomainMixStyleTrainer,
-
     data="all-supress100.yaml",
     # data="/home/yeozekiel/yolo/feature_selected_40_v2/feature_selected.yaml",
-
     epochs=200,
     imgsz=1280,
     batch=16,
-
     device=4,
     workers=4,
-
     # -------------------------
     # Keep your existing setup
     # -------------------------
-
     mosaic=0.0,
     mixup=0.0,
     cutmix=0.0,
     copy_paste=0.0,
     erasing=0.0,
-
     hsv_v=0.1,
     scale=0.25,
-
     fliplr=0.0,
     flipud=0.0,
-
     # IMPORTANT
     # This is a new fine-tune,
     # not resume.
     resume=False,
-
     project="runs/yolo26_cd_mixstyle",
-
     name=(
         "cd_mixstyle_no_balance_"
         # "hospital_suppress100_finetune"

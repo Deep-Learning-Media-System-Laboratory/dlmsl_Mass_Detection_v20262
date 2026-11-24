@@ -5,7 +5,6 @@ import torch
 from ultralytics import YOLO
 from ultralytics.nn.modules import C3k2, C3k2MS
 
-
 MODEL = "ultralytics/cfg/models/26/yolo26n-c3k2ms-deeplite.yaml"
 
 
@@ -17,15 +16,10 @@ def print_gates(model) -> None:
     for name, parameter in model.named_parameters():
         if "residual_scale" in name:
             found = True
-            print(
-                f"{name}: "
-                f"{parameter.detach().cpu().item():.6f}"
-            )
+            print(f"{name}: {parameter.detach().cpu().item():.6f}")
 
     if not found:
-        raise RuntimeError(
-            "No residual_scale parameters were found."
-        )
+        raise RuntimeError("No residual_scale parameters were found.")
 
 
 def main() -> None:
@@ -42,16 +36,11 @@ def main() -> None:
     for index, expected_type in expected.items():
         layer = network.model[index]
 
-        print(
-            f"Layer {index}: "
-            f"{layer.__class__.__name__}"
-        )
+        print(f"Layer {index}: {layer.__class__.__name__}")
 
         if not isinstance(layer, expected_type):
             raise RuntimeError(
-                f"Layer {index} should be "
-                f"{expected_type.__name__}, but found "
-                f"{layer.__class__.__name__}"
+                f"Layer {index} should be {expected_type.__name__}, but found {layer.__class__.__name__}"
             )
 
     print_gates(network)
@@ -69,9 +58,7 @@ def main() -> None:
     print("\nForward output type:", type(output))
     network.info()
 
-    print(
-        "\nYOLO26-C3k2MS-DeepLite verification passed."
-    )
+    print("\nYOLO26-C3k2MS-DeepLite verification passed.")
 
 
 if __name__ == "__main__":
