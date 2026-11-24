@@ -4,7 +4,6 @@ from ultralytics.nn.modules.adaptive_cd_mixstyle import (
     AdaptiveCrossDomainMixStyle,
 )
 
-
 torch.manual_seed(42)
 
 
@@ -94,26 +93,18 @@ print(
 # BASIC CHECK
 # ============================================================
 
-assert (
-    x.shape == y.shape
-)
+assert x.shape == y.shape
 
-print(
-    "Shape test: PASS"
-)
+print("Shape test: PASS")
 
 
 # ============================================================
 # CHECK NUMBERS
 # ============================================================
 
-assert torch.isfinite(
-    y
-).all()
+assert torch.isfinite(y).all()
 
-print(
-    "Finite output: PASS"
-)
+print("Finite output: PASS")
 
 
 # ============================================================
@@ -127,13 +118,9 @@ loss.backward()
 
 assert x.grad is not None
 
-assert torch.isfinite(
-    x.grad
-).all()
+assert torch.isfinite(x.grad).all()
 
-print(
-    "Gradient test: PASS"
-)
+print("Gradient test: PASS")
 
 
 # ============================================================
@@ -142,13 +129,9 @@ print(
 
 debug = mixstyle.last_debug
 
-source = debug[
-    "source_domains"
-]
+source = debug["source_domains"]
 
-partner = debug[
-    "partner_domains"
-]
+partner = debug["partner_domains"]
 
 
 for src, dst in zip(
@@ -158,9 +141,7 @@ for src, dst in zip(
     assert src != dst
 
 
-print(
-    "Cross-domain test: PASS"
-)
+print("Cross-domain test: PASS")
 
 
 # ============================================================
@@ -170,7 +151,6 @@ print(
 mixstyle.eval()
 
 with torch.no_grad():
-
     y_eval = mixstyle(
         x.detach(),
         domain_ids=domain_ids,
@@ -182,20 +162,12 @@ assert torch.equal(
     y_eval,
 )
 
-print(
-    "Eval identity test: PASS"
-)
+print("Eval identity test: PASS")
 
 
 print()
-print(
-    "======================================"
-)
+print("======================================")
 
-print(
-    "ALL ADAPTIVE CD MIXSTYLE TESTS PASSED"
-)
+print("ALL ADAPTIVE CD MIXSTYLE TESTS PASSED")
 
-print(
-    "======================================"
-)
+print("======================================")

@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from .block import C3k2
 from .adaptive_cd_mixstyle import AdaptiveCrossDomainMixStyle
+from .block import C3k2
+
 
 class C3k2AdaptiveCDMixStyle(C3k2):
-    """
-    YOLO C3k2 followed by Adaptive Cross-Domain MixStyle.
+    """YOLO C3k2 followed by Adaptive Cross-Domain MixStyle.
 
-    This class is intentionally separate from the existing
-    Random MixStyle / Cross-Domain MixStyle implementation.
+    This class is intentionally separate from the existing Random MixStyle / Cross-Domain MixStyle implementation.
     """
 
     def __init__(
@@ -20,7 +19,6 @@ class C3k2AdaptiveCDMixStyle(C3k2):
         e=0.5,
         g=1,
         shortcut=True,
-
         # Adaptive MixStyle settings
         mix_p=0.5,
         mix_alpha=0.1,
@@ -28,9 +26,7 @@ class C3k2AdaptiveCDMixStyle(C3k2):
         partner_temperature=0.50,
         adaptation_strength=0.75,
         distance_gamma=1.0,
-
         use_adaptive_lambda=True,
-        
         debug=False,
     ):
         super().__init__(
@@ -58,14 +54,13 @@ class C3k2AdaptiveCDMixStyle(C3k2):
         self._domain_ids = None
 
     def set_domain_ids(self, domain_ids):
-        """
-        Store domain IDs for the current training batch.
+        """Store domain IDs for the current training batch.
 
-        Example:
+        Examples:
             [0, 0, 1, 1, 2, 2, 3, 3]
         """
         self._domain_ids = domain_ids
-    
+
     def clear_domain_ids(self):
         self._domain_ids = None
 
@@ -95,4 +90,3 @@ class C3k2AdaptiveCDMixStyle(C3k2):
     @property
     def mixstyle_debug(self):
         return self.adaptive_mixstyle.last_debug
-

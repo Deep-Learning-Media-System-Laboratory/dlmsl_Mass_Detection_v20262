@@ -3,7 +3,6 @@ import csv
 import hashlib
 import json
 import math
-import os
 import random
 import re
 import shutil
@@ -11,10 +10,10 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 import numpy as np
-import yaml
 
 # Reuse the exact augmentation code used by your SA-AutoAug search.
 import sa_autoaug_search_integrated as sai
+import yaml
 
 SEED = 42
 BASE_DATA_YAML = "with-hospital.yaml"  # ORIGINAL non-oversampled YAML
@@ -37,7 +36,7 @@ OUTPUT_ROOT = "cdms_augmented_oversample_2x"
 # Examples:
 #   SELECTED_DOMAINS = ["bcsdbt"]
 #   SELECTED_DOMAINS = ["bcsdbt", "hospital"]
-SELECTED_DOMAINS = ["hospital-old", "bcc", "img", "bcs-dbt","hospital"]
+SELECTED_DOMAINS = ["hospital-old", "bcc", "img", "bcs-dbt", "hospital"]
 #   SELECTED_DOMAINS = None   # augment all domains
 #
 # Domains NOT selected remain in the training set unchanged.
@@ -66,7 +65,7 @@ def safe_domain_name(domain):
 
 
 def load_best_policy(path):
-    with open(path, "r") as f:
+    with open(path) as f:
         obj = json.load(f)
     if "best_policy" in obj:
         return obj["best_policy"]
@@ -87,11 +86,7 @@ def label_path_from_image(image_path):
 
 def list_images_in_dir(directory):
     directory = Path(directory)
-    return sorted(
-        str(p.resolve())
-        for p in directory.rglob("*")
-        if p.is_file() and p.suffix.lower() in IMAGE_EXTS
-    )
+    return sorted(str(p.resolve()) for p in directory.rglob("*") if p.is_file() and p.suffix.lower() in IMAGE_EXTS)
 
 
 def resolve_candidate(raw, bases):
@@ -113,7 +108,7 @@ def expand_train_entry(entry, dataset_root, yaml_dir):
 
     if p.is_file() and p.suffix.lower() == ".txt":
         out = []
-        with open(p, "r") as f:
+        with open(p) as f:
             for line in f:
                 raw = line.strip()
                 if not raw:
@@ -135,7 +130,7 @@ def load_train_images_from_yaml(data_yaml):
     data_yaml = Path(data_yaml).expanduser().resolve()
     yaml_dir = data_yaml.parent
 
-    with open(data_yaml, "r") as f:
+    with open(data_yaml) as f:
         cfg = yaml.safe_load(f)
 
     root = Path(str(cfg.get("path", "."))).expanduser()
@@ -156,8 +151,7 @@ def load_train_images_from_yaml(data_yaml):
     dup = len(images) - len(set(images))
     if dup:
         raise RuntimeError(
-            f"BASE_DATA_YAML already has {dup} duplicate entries. "
-            "Use the ORIGINAL non-oversampled all.yaml."
+            f"BASE_DATA_YAML already has {dup} duplicate entries. Use the ORIGINAL non-oversampled all.yaml."
         )
 
     return images, cfg
@@ -171,9 +165,7 @@ def load_domain_manifest(path):
         reader = csv.DictReader(f)
         required = {"image_path", "domain"}
         if not reader.fieldnames or not required.issubset(reader.fieldnames):
-            raise RuntimeError(
-                f"Manifest must contain image_path,domain. Found: {reader.fieldnames}"
-            )
+            raise RuntimeError(f"Manifest must contain image_path,domain. Found: {reader.fieldnames}")
 
         for row in reader:
             raw = row["image_path"].strip()
@@ -259,7 +251,7 @@ def compute_targets(pos_by_domain):
     targets = {}
     for d, n in counts.items():
         if d in selected:
-            targets[d] = min(largest, int(math.ceil(n * MAX_FACTOR)))
+            targets[d] = min(largest, math.ceil(n * MAX_FACTOR))
         else:
             targets[d] = n
 
@@ -284,9 +276,7 @@ def make_augmented_copy(
         return None
 
     for _ in range(MAX_AUG_ATTEMPTS_PER_REQUEST):
-        aug_img, aug_bboxes = sai.apply_policy_to_image(
-            img.copy(), bboxes.copy(), policy
-        )
+        aug_img, aug_bboxes = sai.apply_policy_to_image(img.copy(), bboxes.copy(), policy)
         aug_bboxes = [b for b in aug_bboxes if sai.valid_yolo_box(b)]
 
         if bboxes and not aug_bboxes:
@@ -295,10 +285,7 @@ def make_augmented_copy(
             continue
 
         stem = Path(source_image_path).stem
-        aug_name = (
-            f"aug_{safe_domain_name(domain)}_{aug_index:07d}_"
-            f"{stem}_{short_hash(source_image_path)}.png"
-        )
+        aug_name = f"aug_{safe_domain_name(domain)}_{aug_index:07d}_{stem}_{short_hash(source_image_path)}.png"
 
         out_img = output_img_dir / aug_name
         out_lbl = output_lbl_dir / f"{Path(aug_name).stem}.txt"
@@ -335,9 +322,7 @@ def main():
         if RESET_OUTPUT:
             shutil.rmtree(out_root)
         else:
-            raise RuntimeError(
-                f"{out_root} already exists. Set RESET_OUTPUT=True to regenerate."
-            )
+            raise RuntimeError(f"{out_root} already exists. Set RESET_OUTPUT=True to regenerate.")
 
     out_img_dir = out_root / "images" / "train_aug"
     out_lbl_dir = out_root / "labels" / "train_aug"
@@ -353,10 +338,7 @@ def main():
 
     print("\n========== ORIGINAL DISTRIBUTION ==========")
     for d in sorted(all_by_domain):
-        print(
-            f"{d:24s} all={len(all_by_domain[d]):6d} "
-            f"positive={len(pos_by_domain[d]):6d}"
-        )
+        print(f"{d:24s} all={len(all_by_domain[d]):6d} positive={len(pos_by_domain[d]):6d}")
     print("Total positive boxes:", total_boxes)
 
     print("\n========== AUGMENTED OVERSAMPLING PLAN ==========")
@@ -370,11 +352,7 @@ def main():
         need = targets[d] - n
         planned += need
         status = "SELECTED" if d in selected_domains else "unchanged"
-        print(
-            f"{d:24s} positive={n:6d} "
-            f"target={targets[d]:6d} new_aug={need:6d} "
-            f"[{status}]"
-        )
+        print(f"{d:24s} positive={n:6d} target={targets[d]:6d} new_aug={need:6d} [{status}]")
     print("Planned augmented images:", planned)
 
     policy = load_best_policy(policy_path)
@@ -402,19 +380,14 @@ def main():
 
         while generated[domain] < need:
             if attempts >= max_total_attempts:
-                raise RuntimeError(
-                    f"Could not generate enough valid samples for {domain}: "
-                    f"{generated[domain]}/{need}"
-                )
+                raise RuntimeError(f"Could not generate enough valid samples for {domain}: {generated[domain]}/{need}")
 
             source = sources[source_idx % len(sources)]
             source_idx += 1
             attempts += 1
             global_idx += 1
 
-            new_path = make_augmented_copy(
-                source, domain, out_img_dir, out_lbl_dir, global_idx, policy
-            )
+            new_path = make_augmented_copy(source, domain, out_img_dir, out_lbl_dir, global_idx, policy)
 
             if new_path is None:
                 failures[domain] += 1
@@ -460,12 +433,8 @@ def main():
         "original_train_images": len(rows),
         "generated_augmented_images": sum(generated.values()),
         "final_train_entries": len(final_train_paths),
-        "original_all_domain_counts": {
-            d: len(all_by_domain[d]) for d in sorted(all_by_domain)
-        },
-        "original_positive_domain_counts": {
-            d: len(pos_by_domain[d]) for d in sorted(pos_by_domain)
-        },
+        "original_all_domain_counts": {d: len(all_by_domain[d]) for d in sorted(all_by_domain)},
+        "original_positive_domain_counts": {d: len(pos_by_domain[d]) for d in sorted(pos_by_domain)},
         "target_positive_domain_counts": targets,
         "generated_by_domain": dict(generated),
         "generation_failures_by_domain": dict(failures),

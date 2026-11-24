@@ -3,24 +3,16 @@ import os
 
 OUTPUT_ROOT = "cdms_augmented_oversample_2x"
 
-CDMS_MANIFEST = os.path.abspath(
-    os.path.join(OUTPUT_ROOT, "domain_manifest_augmented_oversample.csv")
-)
+CDMS_MANIFEST = os.path.abspath(os.path.join(OUTPUT_ROOT, "domain_manifest_augmented_oversample.csv"))
 os.environ["CDMS_DOMAIN_MANIFEST"] = CDMS_MANIFEST
 
-from ultralytics import YOLO
 from cd_mixstyle_trainer import DomainMixStyleTrainer
+from ultralytics import YOLO
 
 # Start from ORIGINAL best CDMS, not the plain-oversampled checkpoint.
-BEST_MODEL = (
-    "runs/detect/runs/yolo26_cd_mixstyle/"
-    "cd_mixstyle_layer2_layer4_no_balance/"
-    "weights/best.pt"
-)
+BEST_MODEL = "runs/detect/runs/yolo26_cd_mixstyle/cd_mixstyle_layer2_layer4_no_balance/weights/best.pt"
 
-DATA_YAML = os.path.abspath(
-    os.path.join(OUTPUT_ROOT, "all_augmented_oversample.yaml")
-)
+DATA_YAML = os.path.abspath(os.path.join(OUTPUT_ROOT, "all_augmented_oversample.yaml"))
 
 EPOCHS = 50
 IMGSZ = 1280
@@ -54,14 +46,12 @@ def main():
         project=PROJECT,
         name=RUN_NAME,
         exist_ok=False,
-
         optimizer="AdamW",
         lr0=5e-5,
         lrf=0.01,
         cos_lr=True,
         weight_decay=0.0005,
         patience=50,
-
         # Offline policy augmentation already supplies the intended variation.
         augment=False,
         mosaic=0.0,
@@ -75,7 +65,6 @@ def main():
         fliplr=0.0,
         flipud=0.0,
         multi_scale=False,
-
         plots=True,
         val=True,
         resume=False,

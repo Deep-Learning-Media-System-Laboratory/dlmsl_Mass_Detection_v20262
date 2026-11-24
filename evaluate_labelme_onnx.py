@@ -1,9 +1,11 @@
-import os
 import csv
 import json
+import os
+
 import cv2
 import numpy as np
 from tqdm import tqdm
+
 from ultralytics import YOLO
 
 # =========================================================
@@ -11,10 +13,12 @@ from ultralytics import YOLO
 # =========================================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
 def resolve_path(p):
     if os.path.isabs(p):
         return p
     return os.path.join(SCRIPT_DIR, p)
+
 
 MODEL_PATH = resolve_path("massdet_last_20251118.onnx")
 DATA_ROOT = resolve_path("標註影像資料")
@@ -154,7 +158,7 @@ def crop_pad(img, bboxes):
     min_y = int(np.min(idxs[0]))
     max_y = int(np.max(idxs[0]))
 
-    cropped = img[min_y:max_y+1, min_x:max_x+1]
+    cropped = img[min_y : max_y + 1, min_x : max_x + 1]
 
     for b in bboxes:
         b[1] -= min_x
@@ -178,12 +182,9 @@ def crop_pad(img, bboxes):
 
 
 def preprocess_image_and_boxes(img, bboxes, target_img_size=1280, is_hospital=True, apply_clahe=False):
-    """
-    Standard preprocessing without CLAHE for hospital mammography images.
-    - Background removal and mask cleaning
-    - Left-right breast orientation alignment
-    - Tight cropping and 1:1 square padding
-    - Bbox translation and scaling to target_img_size (1280)
+    """Standard preprocessing without CLAHE for hospital mammography images. - Background removal and mask cleaning -
+    Left-right breast orientation alignment - Tight cropping and 1:1 square padding - Bbox translation and scaling
+    to target_img_size (1280).
     """
     if len(img.shape) == 3:
         img = img[:, :, 0]
@@ -199,7 +200,7 @@ def preprocess_image_and_boxes(img, bboxes, target_img_size=1280, is_hospital=Tr
     binarised = global_binarise(norm_img, thresh=thresh_val, maxval=1)
     edited_mask = edit_mask(binarised, ksize=ksize_val, operation="open")
     _, largest_mask = x_largest_blobs(edited_mask, top_x=1, reverse=True)
-    
+
     img = apply_mask(img, largest_mask)
     masked_img = apply_mask(norm_img, largest_mask)
 
@@ -251,9 +252,8 @@ def preprocess_image_and_boxes(img, bboxes, target_img_size=1280, is_hospital=Tr
 # EVALUATION METRICS HELPERS
 # =========================================================
 def calculate_iou(box1, box2):
-    """
-    Calculate Intersection over Union (IoU) between box1 and box2.
-    Both boxes are in [x, y, w, h] absolute pixel format.
+    """Calculate Intersection over Union (IoU) between box1 and box2. Both boxes are in [x, y, w, h] absolute pixel
+    format.
     """
     x1, y1, w1, h1 = box1
     x2, y2, w2, h2 = box2
@@ -275,16 +275,15 @@ def calculate_iou(box1, box2):
 
 
 def load_labelme_gt(json_path):
-    """
-    Read a Labelme .json file and extract bounding boxes for class 'mass'.
-    Converts polygon/rectangle points into [0, x, y, w, h] absolute pixel format.
+    """Read a Labelme .json file and extract bounding boxes for class 'mass'. Converts polygon/rectangle points into [0,
+    x, y, w, h] absolute pixel format.
     """
     bboxes = []
     if not os.path.exists(json_path):
         return bboxes
 
     try:
-        with open(json_path, "r", encoding="utf-8") as f:
+        with open(json_path, encoding="utf-8") as f:
             data = json.load(f)
 
         for shape in data.get("shapes", []):
@@ -308,9 +307,7 @@ def load_labelme_gt(json_path):
 
 
 def collect_dataset_by_subfolder(root_dir, removed_patterns=REMOVED_PATTERNS):
-    """
-    Recursively collect image and Labelme JSON paths, grouped by top subfolder under root_dir.
-    """
+    """Recursively collect image and Labelme JSON paths, grouped by top subfolder under root_dir."""
     subfolders_data = {}
 
     for root, dirs, files in os.walk(root_dir):
@@ -338,13 +335,15 @@ def collect_dataset_by_subfolder(root_dir, removed_patterns=REMOVED_PATTERNS):
                     continue
 
                 json_path = os.path.join(labelme_dir, stem + ".json")
-                subfolders_data[top_folder]["items"].append({
-                    "file_name": f,
-                    "img_path": img_path,
-                    "json_path": json_path,
-                    "rel_dir": rel_root,
-                    "subfolder": top_folder,
-                })
+                subfolders_data[top_folder]["items"].append(
+                    {
+                        "file_name": f,
+                        "img_path": img_path,
+                        "json_path": json_path,
+                        "rel_dir": rel_root,
+                        "subfolder": top_folder,
+                    }
+                )
 
     return subfolders_data
 
@@ -364,8 +363,8 @@ def compute_metrics_from_preds(all_preds, gt_count, tp, fp, fn):
         recalls_arr = cum_tps / gt_count
         precisions_arr = cum_tps / np.maximum(cum_tps + cum_fps, np.finfo(float).eps)
 
-        recalls_arr = np.concatenate(([0.], recalls_arr, [1.]))
-        precisions_arr = np.concatenate(([0.], precisions_arr, [0.]))
+        recalls_arr = np.concatenate(([0.0], recalls_arr, [1.0]))
+        precisions_arr = np.concatenate(([0.0], precisions_arr, [0.0]))
 
         for i in range(len(precisions_arr) - 2, -1, -1):
             precisions_arr[i] = max(precisions_arr[i], precisions_arr[i + 1])
@@ -391,7 +390,7 @@ def evaluate_model(max_images=None, output_folder=OUTPUT_FOLDER):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
-    print(f"=== Starting Per-Folder Model Evaluation (Preprocessing without CLAHE) ===")
+    print("=== Starting Per-Folder Model Evaluation (Preprocessing without CLAHE) ===")
     print(f"Model Path        : {MODEL_PATH}")
     print(f"Data Root         : {DATA_ROOT}")
     print(f"Removed Patterns  : {REMOVED_PATTERNS}")
@@ -464,14 +463,16 @@ def evaluate_model(max_images=None, output_folder=OUTPUT_FOLDER):
                 bboxes=gt_boxes_raw,
                 target_img_size=TARGET_IMG_SIZE,
                 is_hospital=True,
-                apply_clahe=APPLY_CLAHE
+                apply_clahe=APPLY_CLAHE,
             )
 
             p_bboxes_gt = [[b[1], b[2], b[3], b[4]] for b in prep_boxes_cls]
             sf_gt_count += len(p_bboxes_gt)
 
             # Run ONNX inference on preprocessed 1280x1280 image
-            results = model(prep_img, imgsz=TARGET_IMG_SIZE, conf=CONF_THRES, iou=IOU_THRES, end2end=END2END, verbose=False)
+            results = model(
+                prep_img, imgsz=TARGET_IMG_SIZE, conf=CONF_THRES, iou=IOU_THRES, end2end=END2END, verbose=False
+            )
             result = results[0]
 
             pred_bboxes = []
@@ -526,34 +527,44 @@ def evaluate_model(max_images=None, output_folder=OUTPUT_FOLDER):
             img_fn = max(0, len(p_bboxes_gt) - img_tp)
 
             for p in pred_info_list:
-                all_csv_rows.append({
+                all_csv_rows.append(
+                    {
+                        "subfolder": sf,
+                        "image": file_name,
+                        "folder": item["rel_dir"],
+                        "pred_x": round(p[0], 2),
+                        "pred_y": round(p[1], 2),
+                        "pred_w": round(p[2], 2),
+                        "pred_h": round(p[3], 2),
+                        "conf": round(p[4], 4),
+                        "best_iou": round(p[5], 4),
+                        "tp": p[6],
+                    }
+                )
+
+            all_img_records.append(
+                {
                     "subfolder": sf,
                     "image": file_name,
                     "folder": item["rel_dir"],
-                    "pred_x": round(p[0], 2),
-                    "pred_y": round(p[1], 2),
-                    "pred_w": round(p[2], 2),
-                    "pred_h": round(p[3], 2),
-                    "conf": round(p[4], 4),
-                    "best_iou": round(p[5], 4),
-                    "tp": p[6],
-                })
-
-            all_img_records.append({
-                "subfolder": sf,
-                "image": file_name,
-                "folder": item["rel_dir"],
-                "gt_boxes": len(p_bboxes_gt),
-                "tp": img_tp,
-                "fp": img_fp,
-                "fn": img_fn,
-                "predictions": [
-                    {"x": round(p[0], 2), "y": round(p[1], 2),
-                     "w": round(p[2], 2), "h": round(p[3], 2),
-                     "conf": round(p[4], 4), "iou": round(p[5], 4), "tp": p[6]}
-                    for p in pred_info_list
-                ]
-            })
+                    "gt_boxes": len(p_bboxes_gt),
+                    "tp": img_tp,
+                    "fp": img_fp,
+                    "fn": img_fn,
+                    "predictions": [
+                        {
+                            "x": round(p[0], 2),
+                            "y": round(p[1], 2),
+                            "w": round(p[2], 2),
+                            "h": round(p[3], 2),
+                            "conf": round(p[4], 4),
+                            "iou": round(p[5], 4),
+                            "tp": p[6],
+                        }
+                        for p in pred_info_list
+                    ],
+                }
+            )
 
             # Draw Visualization
             if DRAW_ANNOTATIONS:
@@ -563,14 +574,30 @@ def evaluate_model(max_images=None, output_folder=OUTPUT_FOLDER):
                     color = (0, 255, 0) if tp_flag else (0, 165, 255)
                     cv2.rectangle(annotated_img, (int(px), int(py)), (int(px + pw), int(py + ph)), color, 2)
                     label = f"Mass: {conf:.2f}"
-                    cv2.putText(annotated_img, label, (int(px), max(int(py) - 10, 12)),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2, cv2.LINE_AA)
+                    cv2.putText(
+                        annotated_img,
+                        label,
+                        (int(px), max(int(py) - 10, 12)),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        color,
+                        2,
+                        cv2.LINE_AA,
+                    )
 
                 for gt_box in p_bboxes_gt:
                     gx, gy, gw, gh = gt_box
                     cv2.rectangle(annotated_img, (int(gx), int(gy)), (int(gx + gw), int(gy + gh)), (255, 0, 0), 2)
-                    cv2.putText(annotated_img, "GT Mass", (int(gx), int(gy) + 20),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2, cv2.LINE_AA)
+                    cv2.putText(
+                        annotated_img,
+                        "GT Mass",
+                        (int(gx), int(gy) + 20),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 0, 0),
+                        2,
+                        cv2.LINE_AA,
+                    )
 
                 out_img_path = os.path.join(vis_folder, stem + "_eval.jpg")
                 cv2.imwrite(out_img_path, annotated_img)
@@ -599,9 +626,7 @@ def evaluate_model(max_images=None, output_folder=OUTPUT_FOLDER):
         overall_eval_images += len(sf_items)
 
     # Compute overall combined metrics across all subfolders
-    overall_res = compute_metrics_from_preds(
-        overall_all_preds, overall_gt_count, overall_tp, overall_fp, overall_fn
-    )
+    overall_res = compute_metrics_from_preds(overall_all_preds, overall_gt_count, overall_tp, overall_fp, overall_fn)
 
     full_summary = {
         "model": MODEL_PATH,
@@ -632,7 +657,19 @@ def evaluate_model(max_images=None, output_folder=OUTPUT_FOLDER):
 
     # Save Per-Folder Summary CSV
     folder_csv_path = os.path.join(output_folder, "folder_summary.csv")
-    folder_csv_fields = ["subfolder", "total_images", "removed_images", "gt_boxes", "TP", "FP", "FN", "precision", "recall", "f1", "mAP50"]
+    folder_csv_fields = [
+        "subfolder",
+        "total_images",
+        "removed_images",
+        "gt_boxes",
+        "TP",
+        "FP",
+        "FN",
+        "precision",
+        "recall",
+        "f1",
+        "mAP50",
+    ]
     with open(folder_csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=folder_csv_fields)
         writer.writeheader()
@@ -675,11 +712,15 @@ def evaluate_model(max_images=None, output_folder=OUTPUT_FOLDER):
     print("-" * 115)
 
     for sf, m in folder_summaries.items():
-        print(f"{sf:<28} | {m['total_images']:<6} | {m['removed_images']:<7} | {m['gt_boxes']:<5} | {m['TP']:<4} | {m['FP']:<4} | {m['FN']:<4} | {m['precision']:<9.4f} | {m['recall']:<7.4f} | {m['f1']:<6.4f} | {m['mAP50']:<6.4f}")
+        print(
+            f"{sf:<28} | {m['total_images']:<6} | {m['removed_images']:<7} | {m['gt_boxes']:<5} | {m['TP']:<4} | {m['FP']:<4} | {m['FN']:<4} | {m['precision']:<9.4f} | {m['recall']:<7.4f} | {m['f1']:<6.4f} | {m['mAP50']:<6.4f}"
+        )
 
     print("-" * 115)
     m = overall_res
-    print(f"{'OVERALL (ALL FOLDERS)':<28} | {overall_eval_images:<6} | {overall_removed_images:<7} | {overall_gt_count:<5} | {m['TP']:<4} | {m['FP']:<4} | {m['FN']:<4} | {m['precision']:<9.4f} | {m['recall']:<7.4f} | {m['f1']:<6.4f} | {m['mAP50']:<6.4f}")
+    print(
+        f"{'OVERALL (ALL FOLDERS)':<28} | {overall_eval_images:<6} | {overall_removed_images:<7} | {overall_gt_count:<5} | {m['TP']:<4} | {m['FP']:<4} | {m['FN']:<4} | {m['precision']:<9.4f} | {m['recall']:<7.4f} | {m['f1']:<6.4f} | {m['mAP50']:<6.4f}"
+    )
     print("=" * 115)
     print(f"Results saved to directory: {output_folder}")
 
@@ -688,8 +729,13 @@ def evaluate_model(max_images=None, output_folder=OUTPUT_FOLDER):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Evaluate massdet_last_20251118.onnx on each folder in 標註影像資料 (Preprocessing without CLAHE)")
-    parser.add_argument("--max_images", type=int, default=None, help="Optional max images limit per folder for quick test run")
+
+    parser = argparse.ArgumentParser(
+        description="Evaluate massdet_last_20251118.onnx on each folder in 標註影像資料 (Preprocessing without CLAHE)"
+    )
+    parser.add_argument(
+        "--max_images", type=int, default=None, help="Optional max images limit per folder for quick test run"
+    )
     parser.add_argument("--output_folder", type=str, default=OUTPUT_FOLDER, help="Output directory")
     args = parser.parse_args()
 

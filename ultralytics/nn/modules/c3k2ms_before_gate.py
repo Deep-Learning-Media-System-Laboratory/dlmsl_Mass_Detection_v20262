@@ -10,7 +10,7 @@ from torch import nn
 from .block import C2f, PSABlock
 from .conv import Conv
 
-__all__ = ("MSKernelLayer", "MSBottleneck", "C3k2MS")
+__all__ = ("C3k2MS", "MSBottleneck", "MSKernelLayer")
 
 
 class MSKernelLayer(nn.Module):
@@ -28,20 +28,13 @@ class MSKernelLayer(nn.Module):
         super().__init__()
 
         if channels <= 0:
-            raise ValueError(
-                f"channels must be positive, received {channels}"
-            )
+            raise ValueError(f"channels must be positive, received {channels}")
 
         if kernel_size <= 1 or kernel_size % 2 == 0:
-            raise ValueError(
-                "kernel_size must be an odd integer larger than 1, "
-                f"received {kernel_size}"
-            )
+            raise ValueError(f"kernel_size must be an odd integer larger than 1, received {kernel_size}")
 
         if expand_ratio < 1.0:
-            raise ValueError(
-                f"expand_ratio must be >= 1.0, received {expand_ratio}"
-            )
+            raise ValueError(f"expand_ratio must be >= 1.0, received {expand_ratio}")
 
         expanded_channels = int(channels * expand_ratio)
 
@@ -113,14 +106,10 @@ class MSBottleneck(nn.Module):
         super().__init__()
 
         if down_ratio <= 0:
-            raise ValueError(
-                f"down_ratio must be positive, received {down_ratio}"
-            )
+            raise ValueError(f"down_ratio must be positive, received {down_ratio}")
 
         if layers_num < 1:
-            raise ValueError(
-                f"layers_num must be >= 1, received {layers_num}"
-            )
+            raise ValueError(f"layers_num must be >= 1, received {layers_num}")
 
         branch_channels = max(
             1,
@@ -184,9 +173,7 @@ class MSBottleneck(nn.Module):
         output_1 = self.branch_1(branch_1)
 
         # Hierarchical cross-branch propagation from YOLO-MS.
-        output_2 = self.branch_2(
-            branch_2 + output_1
-        )
+        output_2 = self.branch_2(branch_2 + output_1)
 
         output = torch.cat(
             (output_0, output_1, output_2),
@@ -201,8 +188,7 @@ class MSBottleneck(nn.Module):
 class C3k2MS(C2f):
     """C3k2 outer structure with MS-style internal processing.
 
-    The outer C2f flow remains unchanged. Only the modules stored in
-    ``self.m`` are replaced by MSBottleneck modules.
+    The outer C2f flow remains unchanged. Only the modules stored in ``self.m`` are replaced by MSBottleneck modules.
 
     Args:
         c1: Input channels.

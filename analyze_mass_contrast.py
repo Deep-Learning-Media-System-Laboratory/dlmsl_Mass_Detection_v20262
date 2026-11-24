@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-analyze_mass_contrast.py
+analyze_mass_contrast.py.
 
 Calculate a local lesion-to-background intensity/density proxy for mammography
 ground-truth mass boxes stored in COCO JSON.
@@ -10,7 +10,7 @@ Optional:
     matching, allowing direct analysis of whether false negatives are associated
     with low local contrast.
 
-IMPORTANT
+Important:
 ---------
 These measurements are IMAGE-DERIVED intensity/contrast proxies.
 They are NOT radiologist-assigned BI-RADS mass density categories.
@@ -37,14 +37,12 @@ import json
 import math
 import os
 import re
-import sys
 from collections import defaultdict
 from pathlib import Path
 
 import cv2
 import numpy as np
 import pandas as pd
-
 
 KNOWN_PREFIXES = (
     "bcsdbt_",
@@ -55,9 +53,7 @@ KNOWN_PREFIXES = (
 
 
 def parse_args():
-    p = argparse.ArgumentParser(
-        description="Analyze local lesion-to-background mammographic contrast."
-    )
+    p = argparse.ArgumentParser(description="Analyze local lesion-to-background mammographic contrast.")
     p.add_argument(
         "--images",
         required=True,
@@ -131,7 +127,7 @@ def normalize_name(name):
     low = base.lower()
     for prefix in KNOWN_PREFIXES:
         if low.startswith(prefix):
-            return base[len(prefix):]
+            return base[len(prefix) :]
     return base
 
 
@@ -154,10 +150,8 @@ def infer_source(filename):
 
 
 def build_image_index(image_root):
-    """
-    Build normalized-name -> paths index.
-    This handles benchmark files that have dataset prefixes even if the COCO JSON
-    stores the unprefixed original filename.
+    """Build normalized-name -> paths index. This handles benchmark files that have dataset prefixes even if the COCO
+    JSON stores the unprefixed original filename.
     """
     root = Path(image_root)
     if not root.exists():
@@ -205,9 +199,8 @@ def read_grayscale(path):
 
 
 def robust_normalize(img, low_q=0.5, high_q=99.5):
-    """
-    Normalize each mammogram to [0,1] using robust image percentiles.
-    This improves comparability across PNG bit depths / preprocessing ranges.
+    """Normalize each mammogram to [0,1] using robust image percentiles. This improves comparability across PNG bit
+    depths / preprocessing ranges.
     """
     finite = img[np.isfinite(img)]
     if finite.size == 0:
@@ -241,17 +234,14 @@ def largest_component(mask):
 
 
 def make_breast_mask(norm_img):
-    """
-    Approximate breast-tissue mask using Otsu threshold + largest component.
+    """Approximate breast-tissue mask using Otsu threshold + largest component.
 
-    This mask is only used to reduce contamination from black/non-breast
-    background when the local ring reaches outside the breast.
+    This mask is only used to reduce contamination from black/non-breast background when the local ring reaches outside
+    the breast.
     """
     u8 = np.clip(norm_img * 255.0, 0, 255).astype(np.uint8)
 
-    _, binary = cv2.threshold(
-        u8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-    )
+    _, binary = cv2.threshold(u8, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     # Mild morphological cleanup.
     k = np.ones((5, 5), np.uint8)
@@ -270,10 +260,10 @@ def make_breast_mask(norm_img):
 def clamp_bbox_xywh(bbox, width, height):
     x, y, w, h = map(float, bbox)
 
-    x1 = max(0, min(width, int(math.floor(x))))
-    y1 = max(0, min(height, int(math.floor(y))))
-    x2 = max(0, min(width, int(math.ceil(x + w))))
-    y2 = max(0, min(height, int(math.ceil(y + h))))
+    x1 = max(0, min(width, math.floor(x)))
+    y1 = max(0, min(height, math.floor(y)))
+    x2 = max(0, min(width, math.ceil(x + w)))
+    y2 = max(0, min(height, math.ceil(y + h)))
 
     return x1, y1, x2, y2
 
@@ -286,10 +276,10 @@ def scaled_box_xyxy(bbox, scale, width, height):
     sw = w * scale
     sh = h * scale
 
-    x1 = max(0, min(width, int(math.floor(cx - sw / 2.0))))
-    y1 = max(0, min(height, int(math.floor(cy - sh / 2.0))))
-    x2 = max(0, min(width, int(math.ceil(cx + sw / 2.0))))
-    y2 = max(0, min(height, int(math.ceil(cy + sh / 2.0))))
+    x1 = max(0, min(width, math.floor(cx - sw / 2.0)))
+    y1 = max(0, min(height, math.floor(cy - sh / 2.0)))
+    x2 = max(0, min(width, math.ceil(cx + sw / 2.0)))
+    y2 = max(0, min(height, math.ceil(cy + sh / 2.0)))
 
     return x1, y1, x2, y2
 
@@ -383,9 +373,7 @@ def load_predictions(pred_csv):
     }
     missing = required - set(df.columns)
     if missing:
-        raise ValueError(
-            f"Prediction CSV is missing required columns: {sorted(missing)}"
-        )
+        raise ValueError(f"Prediction CSV is missing required columns: {sorted(missing)}")
 
     groups = defaultdict(list)
     for _, row in df.iterrows():
@@ -395,11 +383,10 @@ def load_predictions(pred_csv):
 
 
 def assign_detection_status(images, anns_by_image, pred_groups, iou_thr):
-    """
-    Reproduce one-to-one GT matching.
+    """Reproduce one-to-one GT matching.
 
-    Predictions are processed from highest confidence to lowest. Each prediction
-    can match only one previously unmatched GT, and each GT can match only once.
+    Predictions are processed from highest confidence to lowest. Each prediction can match only one previously unmatched
+    GT, and each GT can match only once.
     """
     assignment = {}
 
@@ -455,9 +442,7 @@ def assign_detection_status(images, anns_by_image, pred_groups, iou_thr):
 
 
 def quantile_label(series, low_name="Q1_lowest", high_name="Q4_highest"):
-    """
-    Stable quartile classification from explicit quantiles.
-    Returns labels and thresholds.
+    """Stable quartile classification from explicit quantiles. Returns labels and thresholds.
     """
     s = pd.to_numeric(series, errors="coerce")
     valid = s.dropna()
@@ -492,9 +477,7 @@ def calculate_metrics(
     min_bg_pixels,
     similar_threshold,
 ):
-    lesion_mask, ring_mask = make_lesion_and_ring_masks(
-        norm_img.shape, bbox, inner_scale, outer_scale
-    )
+    lesion_mask, ring_mask = make_lesion_and_ring_masks(norm_img.shape, bbox, inner_scale, outer_scale)
 
     # Prefer tissue-only sampling.
     lesion_use = lesion_mask & tissue_mask
@@ -596,9 +579,7 @@ def create_summary(df):
                 "median_bbox_area_fraction": g["bbox_area_fraction"].median(),
                 "median_density_ratio": g["density_ratio_median"].median(),
                 "median_weber_contrast": g["weber_contrast_median"].median(),
-                "median_abs_weber_contrast": g[
-                    "abs_weber_contrast_median"
-                ].median(),
+                "median_abs_weber_contrast": g["abs_weber_contrast_median"].median(),
                 "median_robust_cnr": g["robust_cnr"].median(),
                 "median_abs_robust_cnr": g["abs_robust_cnr"].median(),
             }
@@ -618,9 +599,7 @@ def create_summary(df):
                 "median_bbox_area_fraction": g["bbox_area_fraction"].median(),
                 "median_density_ratio": g["density_ratio_median"].median(),
                 "median_weber_contrast": g["weber_contrast_median"].median(),
-                "median_abs_weber_contrast": g[
-                    "abs_weber_contrast_median"
-                ].median(),
+                "median_abs_weber_contrast": g["abs_weber_contrast_median"].median(),
                 "median_robust_cnr": g["robust_cnr"].median(),
                 "median_abs_robust_cnr": g["abs_robust_cnr"].median(),
             }
@@ -644,9 +623,7 @@ def fn_rate_table(df, group_col):
                 "fn_rate": fn / n if n else np.nan,
                 "median_bbox_area_px2": g["bbox_area_px2"].median(),
                 "median_abs_robust_cnr": g["abs_robust_cnr"].median(),
-                "median_abs_weber_contrast": g[
-                    "abs_weber_contrast_median"
-                ].median(),
+                "median_abs_weber_contrast": g["abs_weber_contrast_median"].median(),
             }
         )
     return pd.DataFrame(rows)
@@ -654,9 +631,7 @@ def fn_rate_table(df, group_col):
 
 def size_contrast_table(df):
     rows = []
-    for (size_q, contrast_q), g in df.groupby(
-        ["size_quartile", "conspicuity_quartile"], dropna=False
-    ):
+    for (size_q, contrast_q), g in df.groupby(["size_quartile", "conspicuity_quartile"], dropna=False):
         n = len(g)
         fn = int((g["detection_status"] == "FN").sum())
         rows.append(
@@ -686,9 +661,7 @@ def make_plots(df, out_dir):
     # Histogram
     fig, ax = plt.subplots(figsize=(8, 5))
     for status in ["TP", "FN"]:
-        vals = plot_df.loc[
-            plot_df["detection_status"] == status, "abs_robust_cnr"
-        ].values
+        vals = plot_df.loc[plot_df["detection_status"] == status, "abs_robust_cnr"].values
         if len(vals):
             ax.hist(vals, bins=25, alpha=0.5, label=status)
     ax.set_xlabel("Absolute robust CNR")
@@ -731,13 +704,13 @@ def main():
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print("Loading COCO annotations...")
-    with open(args.coco, "r", encoding="utf-8") as f:
+    with open(args.coco, encoding="utf-8") as f:
         coco = json.load(f)
 
     images = coco.get("images", [])
     annotations = coco.get("annotations", [])
 
-    image_by_id = {im["id"]: im for im in images}
+    {im["id"]: im for im in images}
     anns_by_image = defaultdict(list)
     for ann in annotations:
         anns_by_image[ann["image_id"]].append(ann)
@@ -756,14 +729,8 @@ def main():
             args.iou,
         )
 
-        tp_count = sum(
-            x["detection_status"] == "TP"
-            for x in detection_assignment.values()
-        )
-        fn_count = sum(
-            x["detection_status"] == "FN"
-            for x in detection_assignment.values()
-        )
+        tp_count = sum(x["detection_status"] == "TP" for x in detection_assignment.values())
+        fn_count = sum(x["detection_status"] == "FN" for x in detection_assignment.values())
         print(f"Reconstructed GT status @ IoU>{args.iou}: TP={tp_count}, FN={fn_count}")
 
     print("Indexing benchmark images...")
@@ -858,9 +825,7 @@ def main():
             print(f"Processed {processed_images} positive images...")
 
     if not rows:
-        raise RuntimeError(
-            "No annotated lesions were processed. Check --images and filename matching."
-        )
+        raise RuntimeError("No annotated lesions were processed. Check --images and filename matching.")
 
     df = pd.DataFrame(rows)
 
@@ -897,10 +862,7 @@ def main():
         size_contrast.to_csv(size_contrast_path, index=False)
 
     metadata = {
-        "note": (
-            "Image-derived local lesion/background intensity metrics. "
-            "These are NOT BI-RADS mass density labels."
-        ),
+        "note": ("Image-derived local lesion/background intensity metrics. These are NOT BI-RADS mass density labels."),
         "coco": str(args.coco),
         "images": str(args.images),
         "pred": str(args.pred) if args.pred else None,
@@ -909,8 +871,8 @@ def main():
         "background_ring_outer_scale": args.outer_scale,
         "robust_normalization_percentiles": [0.5, 99.5],
         "similar_intensity_heuristic_threshold": args.similar_threshold,
-        "n_processed_gt": int(len(df)),
-        "n_missing_positive_images": int(len(missing_images)),
+        "n_processed_gt": len(df),
+        "n_missing_positive_images": len(missing_images),
         "size_quartile_thresholds_px2": size_thresholds,
         "abs_robust_cnr_quartile_thresholds": contrast_thresholds,
         "tp": int((df["detection_status"] == "TP").sum()),
@@ -923,10 +885,7 @@ def main():
     if missing_images:
         missing_path = out_dir / "missing_positive_images.txt"
         missing_path.write_text("\n".join(missing_images), encoding="utf-8")
-        print(
-            f"[WARN] {len(missing_images)} positive images were not found. "
-            f"See {missing_path}"
-        )
+        print(f"[WARN] {len(missing_images)} positive images were not found. See {missing_path}")
 
     if not args.no_plots:
         make_plots(df, out_dir)
@@ -940,10 +899,7 @@ def main():
     print(f"Output directory    : {out_dir.resolve()}")
     print()
     print("Primary metric:")
-    print(
-        "  abs_robust_cnr = |median(lesion) - median(background)| / "
-        "(1.4826 * MAD(background))"
-    )
+    print("  abs_robust_cnr = |median(lesion) - median(background)| / (1.4826 * MAD(background))")
     print()
     print("Interpretation:")
     print("  smaller abs_robust_cnr -> lesion is less locally conspicuous")

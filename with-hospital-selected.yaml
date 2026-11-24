@@ -2,7 +2,7 @@ train: selected_train.txt
 
 val: /home/yeozekiel/yolo/hospital_yolo_dataset_v3/images/test
 
-test: ''
+test: ""
 
 names:
   0: mass

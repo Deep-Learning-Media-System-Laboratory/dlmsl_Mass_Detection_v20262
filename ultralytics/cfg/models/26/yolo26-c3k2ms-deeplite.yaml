@@ -47,15 +47,13 @@ head:
   # Lightweight gated MS processing at P4
   - [-1, 1, Conv, [256, 3, 2]] # 17
   - [[-1, 13], 1, Concat, [1]] # 18
-  - [-1, 2, C3k2MS,
-     [512, 3, 0.5, False, 1, True, 0.25, 1.0, 1, 0.1]] # 19 P4/16
+  - [-1, 2, C3k2MS, [512, 3, 0.5, False, 1, True, 0.25, 1.0, 1, 0.1]] # 19 P4/16
 
   # Lightweight gated MS processing at P5
   # Retain YOLO26 PSA attention.
   - [-1, 1, Conv, [512, 3, 2]] # 20
   - [[-1, 10], 1, Concat, [1]] # 21
-  - [-1, 1, C3k2MS,
-     [1024, 5, 0.5, True, 1, True, 0.25, 1.0, 1, 0.1]] # 22 P5/32
+  - [-1, 1, C3k2MS, [1024, 5, 0.5, True, 1, True, 0.25, 1.0, 1, 0.1]] # 22 P5/32
 
   # Original YOLO26 Detect head
   - [[16, 19, 22], 1, Detect, [nc]] # 23

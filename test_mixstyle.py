@@ -2,7 +2,6 @@ import torch
 
 from ultralytics.nn.modules.mixstyle import MixStyle
 
-
 x = torch.randn(
     8,
     128,
